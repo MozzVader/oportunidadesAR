@@ -76,6 +76,92 @@ function showAlert(id, msg, type) {
 }
 
 // ══════════════════════════════════════════════
+// TOAST NOTIFICATIONS
+// ══════════════════════════════════════════════
+const TOAST = (() => {
+  const ICONS = {
+    success: '\u2713',
+    error:   '\u2715',
+    warning: '\u26A0',
+    info:    '\u2139'
+  };
+  const DURATIONS = { success: 4000, error: 6000, warning: 5000, info: 4000 };
+  const MAX_VISIBLE = 5;
+  let _container = null;
+
+  function _getContainer() {
+    if (_container && document.body.contains(_container)) return _container;
+    _container = document.createElement('div');
+    _container.id = 'toastContainer';
+    _container.className = 'toast-container';
+    document.body.appendChild(_container);
+    return _container;
+  }
+
+  function show(message, type = 'info', duration) {
+    const dur = duration !== undefined ? duration : (DURATIONS[type] || 4000);
+    const container = _getContainer();
+
+    // Limitar cantidad visible
+    const existing = container.querySelectorAll('.toast');
+    if (existing.length >= MAX_VISIBLE) {
+      dismiss(existing[0]);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML =
+      '<span class="toast-icon">' + (ICONS[type] || ICONS.info) + '</span>' +
+      '<span class="toast-msg">' + message + '</span>' +
+      '<button class="toast-close">\u2715</button>';
+
+    // Cerrar con boton
+    toast.querySelector('.toast-close').addEventListener('click', () => dismiss(toast));
+
+    container.appendChild(toast);
+
+    // Trigger slide-in
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => toast.classList.add('toast-visible'));
+    });
+
+    // Progress bar
+    if (dur > 0) {
+      const bar = document.createElement('div');
+      bar.className = 'toast-progress';
+      bar.style.animationDuration = dur + 'ms';
+      toast.appendChild(bar);
+      setTimeout(() => dismiss(toast), dur);
+    }
+
+    return toast;
+  }
+
+  function dismiss(toast) {
+    if (!toast || !toast.parentElement || toast.classList.contains('toast-removing')) return;
+    toast.classList.add('toast-removing');
+    setTimeout(() => {
+      if (toast.parentElement) toast.parentElement.removeChild(toast);
+    }, 350);
+  }
+
+  function dismissAll() {
+    const container = _getContainer();
+    container.querySelectorAll('.toast').forEach(t => dismiss(t));
+  }
+
+  return {
+    show,
+    dismiss,
+    dismissAll,
+    success: (msg, dur) => show(msg, 'success', dur),
+    error:   (msg, dur) => show(msg, 'error', dur),
+    warning: (msg, dur) => show(msg, 'warning', dur),
+    info:    (msg, dur) => show(msg, 'info', dur)
+  };
+})();
+
+// ══════════════════════════════════════════════
 // NAVIGATION
 // ══════════════════════════════════════════════
 const PAGE_TITLES = {
@@ -247,10 +333,10 @@ async function handleNueva(e) {
       probabilidad: document.getElementById('n_probabilidad').value || '',
       pm:           document.getElementById('n_pm').value || ''
     });
-    showAlert('nuevaAlert', `Oportunidad guardada exitosamente.`, 'success');
+    TOAST.success('Oportunidad guardada exitosamente.');
     resetNueva();
   } catch(err) {
-    showAlert('nuevaAlert', 'Error al guardar. Intentá de nuevo.', 'error');
+    TOAST.error('Error al guardar. Intentá de nuevo.');
   } finally {
     btn.disabled = false;
     btn.innerHTML = 'Guardar Oportunidad →';
@@ -382,13 +468,13 @@ async function handleUpdate(e) {
       probabilidad: document.getElementById('e_probabilidad').value || '',
       pm:           document.getElementById('e_pm').value || ''
     });
-    showAlert('modAlert', 'Oportunidad actualizada correctamente.', 'success');
+    TOAST.success('Oportunidad actualizada correctamente.');
     backToModSearch();
     CRM.invalidateCache();
     _modRows = await CRM.getData();
     doModSearch();
   } catch(err) {
-    showAlert('modAlert', 'Error al actualizar. Intentá de nuevo.', 'error');
+    TOAST.error('Error al actualizar. Intentá de nuevo.');
   } finally {
     btn.disabled = false;
     btn.innerHTML = 'Guardar Cambios →';
@@ -401,13 +487,13 @@ async function handleDelete() {
   if (!confirm(`¿Seguro que querés eliminar "${name}"?`)) return;
   try {
     await CRM.deleteOportunidad(id);
-    showAlert('modAlert', 'Oportunidad eliminada.', 'success');
+    TOAST.success('Oportunidad eliminada.');
     backToModSearch();
     CRM.invalidateCache();
     _modRows = await CRM.getData();
     doModSearch();
   } catch(err) {
-    showAlert('modAlert', 'Error al eliminar.', 'error');
+    TOAST.error('Error al eliminar.');
   }
 }
 
@@ -694,16 +780,16 @@ async function handleChangePass(e) {
   const newPass     = document.getElementById('p_newPass').value;
   const confirmPass = document.getElementById('p_confirmPass').value;
   const btn         = document.getElementById('p_btnChange');
-  if (newPass !== confirmPass) { showAlert('perfilAlert', 'Las contraseñas nuevas no coinciden.', 'error'); return; }
-  if (newPass.length < 6)     { showAlert('perfilAlert', 'La contraseña debe tener al menos 6 caracteres.', 'error'); return; }
+  if (newPass !== confirmPass) { TOAST.error('Las contraseñas nuevas no coinciden.'); return; }
+  if (newPass.length < 6)     { TOAST.error('La contraseña debe tener al menos 6 caracteres.'); return; }
   btn.disabled = true;
   btn.textContent = 'Guardando...';
   try {
     const result = await AUTH.changePassword(oldPass, newPass);
-    if (result.ok) { showAlert('perfilAlert', 'Contraseña actualizada correctamente.', 'success'); e.target.reset(); }
-    else showAlert('perfilAlert', result.error, 'error');
+    if (result.ok) { TOAST.success('Contraseña actualizada correctamente.'); e.target.reset(); }
+    else TOAST.error(result.error);
   } catch(err) {
-    showAlert('perfilAlert', 'Error de conexión.', 'error');
+    TOAST.error('Error de conexión.');
   } finally {
     btn.disabled = false;
     btn.textContent = 'Cambiar Contraseña';
@@ -785,7 +871,7 @@ async function handleUserModalSubmit(e) {
         perfil:     document.getElementById('um_perfil').value,
         activo:     document.getElementById('um_activo').value === 'SI'
       });
-      if (result.ok) { showAlert('usuariosAlert', 'Usuario creado correctamente.', 'success'); closeUserModal(); loadUsuarios(); }
+      if (result.ok) { TOAST.success('Usuario creado correctamente.'); closeUserModal(); loadUsuarios(); }
       else showModalAlert(result.error || 'Error al crear el usuario.');
     } else {
       const uid = document.getElementById('um_usuarioOriginal').value;
@@ -804,7 +890,7 @@ async function handleUserModalSubmit(e) {
         // Por ahora, actualizamos solo el perfil
       }
       const ok = await AUTH.updateUser(uid, data);
-      if (ok) { showAlert('usuariosAlert', 'Usuario actualizado correctamente.', 'success'); closeUserModal(); loadUsuarios(); }
+      if (ok) { TOAST.success('Usuario actualizado correctamente.'); closeUserModal(); loadUsuarios(); }
       else showModalAlert('Error al guardar.');
     }
   } catch(err) {
