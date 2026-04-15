@@ -5,7 +5,7 @@ const OPORTUNIDADES_COL = 'oportunidades';
 const COLUMNS = [
   'id', 'cliente', 'industria', 'practica',
   'nombre', 'descripcion', 'origen',
-  'responsable', 'estado', 'fechaInicio', 'fechaEntrega',
+  'responsable', 'responsableUid', 'estado', 'fechaInicio', 'fechaEntrega',
   'notas', 'tcv', 'currency', 'tcvEur', 'tipoCambio',
   'probabilidad', 'pm', 'fechaCreacion', 'fechaModificacion'
 ];
@@ -40,6 +40,7 @@ function docToObj(doc) {
     descripcion:     d.descripcion     || '',
     origen:          d.origen          || '',
     responsable:     d.responsable     || '',
+    responsableUid:  d.responsableUid  || '',
     estado:          d.estado          || '',
     fechaInicio:     d.fechaInicio     || '',
     fechaEntrega:    d.fechaEntrega    || '',
@@ -87,6 +88,7 @@ async function addOportunidad(data) {
       descripcion:       data.descripcion     || '',
       origen:            data.origen          || '',
       responsable:       data.responsable     || '',
+      responsableUid:    session ? session.uid : '',
       estado:            data.estado          || 'En Desarrollo',
       fechaInicio:       data.fechaInicio     || '',
       fechaEntrega:      data.fechaEntrega    || '',

@@ -60,7 +60,7 @@ function fmtEUR(n) {
 function canEdit(r) {
   const s = AUTH.getSession();
   if (!s) return false;
-  return s.perfil === 'admin' || r.responsable === s.nombre;
+  return s.perfil === 'admin' || r.responsableUid === s.uid;
 }
 
 function badgeEstado(e) {
@@ -286,7 +286,7 @@ function doModSearch() {
   const q = document.getElementById('modSearchInput').value.trim().toLowerCase();
   const session = AUTH.getSession();
   let rows = _modRows;
-  if (session && session.perfil !== 'admin') rows = rows.filter(r => r.responsable === session.nombre);
+  if (session && session.perfil !== 'admin') rows = rows.filter(r => r.responsableUid === session.uid);
   const filtered = q
     ? rows.filter(r => (r.cliente || '').toLowerCase().includes(q) || (r.nombre || '').toLowerCase().includes(q) || (r.id || '').toLowerCase().includes(q))
     : rows.slice(0, 20);
@@ -306,7 +306,7 @@ async function loadModItem(id) {
   if (!r) r = await CRM.getOportunidad(id);
   if (!r) return;
   const session = AUTH.getSession();
-  if (session && session.perfil !== 'admin' && r.responsable !== session.nombre) {
+  if (session && session.perfil !== 'admin' && r.responsableUid !== session.uid) {
     alert('Solo podés editar oportunidades que te pertenecen.');
     return;
   }
@@ -832,7 +832,7 @@ async function initMis() {
   document.getElementById('misTable').style.display = 'none';
   const session = AUTH.getSession();
   const raw = await CRM.getData();
-  _misRows = raw.filter(r => r.responsable === session.nombre);
+  _misRows = raw.filter(r => r.responsableUid === session.uid);
   document.getElementById('misLoading').style.display = 'none';
   document.getElementById('misTable').style.display = 'block';
   renderMis();
