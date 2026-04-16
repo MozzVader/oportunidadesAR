@@ -95,7 +95,7 @@ async function getNextCodigo() {
     return 'OPP-' + String(result).padStart(4, '0');
   } catch(e) {
     console.error('Error obteniendo código secuencial:', e);
-    return 'OPP-' + Date.now().toString(36).toUpperCase();
+    throw new Error('No se pudo generar el código de oportunidad. Verificá que el documento counters/oportunidades exista en Firestore.');
   }
 }
 
