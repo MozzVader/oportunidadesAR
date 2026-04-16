@@ -577,6 +577,7 @@ async function handleDelete() {
 // TODAS LAS OPORTUNIDADES
 // ══════════════════════════════════════════════
 let _tablaRows = [], _sortKey = 'fechaCreacion', _sortDir = -1, _tablaPage = 1;
+let _bulkSelected = new Set(); // IDs seleccionados para eliminación masiva
 
 async function initTabla() {
   document.getElementById('todasLoading').style.display = 'flex';
@@ -598,6 +599,9 @@ async function initTabla() {
   clientes.forEach(cl => selC.innerHTML += `<option>${cl}</option>`);
 
   _tablaPage = 1;
+  _bulkSelected.clear();
+  const isAdmin = AUTH.getSession()?.perfil === 'admin';
+  document.getElementById('thSelectAll').style.display = isAdmin ? '' : 'none';
   renderTabla();
 }
 
@@ -639,8 +643,10 @@ function renderTabla(page) {
   empty.style.display = 'none';
 
   const pg = paginate(rows, _tablaPage);
+  const isAdmin = AUTH.getSession()?.perfil === 'admin';
   body.innerHTML = pg.rows.map(r => `
-    <tr>
+    <tr${_bulkSelected.has(r.id) ? ' style="background:color-mix(in srgb, var(--accent) 8%, transparent)"' : ''}>
+      ${isAdmin ? `<td style="text-align:center"><input type="checkbox" ${_bulkSelected.has(r.id) ? 'checked' : ''} onchange="toggleBulkSelect('${r.id}', this.checked)" style="cursor:pointer;accent-color:var(--accent)"/></td>` : ''}
       <td class="col-id">${friendlyId(r)}</td>
       <td style="font-weight:600">${r.cliente || '—'}</td>
       <td style="max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.nombre || '—'}</td>
@@ -652,7 +658,111 @@ function renderTabla(page) {
       </td>
     </tr>`).join('');
 
+  updateBulkUI();
   renderPagination('todasPagination', pg, (p) => renderTabla(p));
+}
+
+// ── BULK DELETE ──
+function toggleBulkSelect(id, checked) {
+  if (checked) _bulkSelected.add(id); else _bulkSelected.delete(id);
+  renderTabla();
+}
+
+function toggleSelectAll(checked) {
+  const filteredIds = getFilteredTablaRows().map(r => r.id);
+  if (checked) filteredIds.forEach(id => _bulkSelected.add(id));
+  else filteredIds.forEach(id => _bulkSelected.delete(id));
+  renderTabla();
+}
+
+function getFilteredTablaRows() {
+  const q    = document.getElementById('t_search').value.trim().toLowerCase();
+  const est  = document.getElementById('t_estado').value;
+  const prac = document.getElementById('t_practica').value;
+  const resp = document.getElementById('t_responsable').value;
+  const cli  = document.getElementById('t_cliente').value;
+  return _tablaRows.filter(r => {
+    if (cli  && r.cliente  !== cli)  return false;
+    if (est  && r.estado   !== est)  return false;
+    if (prac && r.practica !== prac) return false;
+    if (resp && r.responsable !== resp) return false;
+    if (q) {
+      const h = [r.codigo, r.cliente, r.nombre, r.responsable].join(' ').toLowerCase();
+      if (!h.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function updateBulkUI() {
+  const bar = document.getElementById('bulkBar');
+  const count = _bulkSelected.size;
+  if (count > 0) {
+    bar.style.display = 'flex';
+    document.getElementById('bulkCount').textContent = count;
+    document.getElementById('bulkPlural').textContent = count === 1 ? '' : 'es';
+    document.getElementById('bulkPlural2').textContent = count === 1 ? '' : 's';
+  } else {
+    bar.style.display = 'none';
+  }
+  // Sync "select all" checkbox
+  const filteredIds = getFilteredTablaRows().map(r => r.id);
+  const allBox = document.getElementById('selectAllCheckbox');
+  if (allBox) {
+    if (filteredIds.length > 0 && filteredIds.every(id => _bulkSelected.has(id))) allBox.checked = true;
+    else allBox.checked = false;
+  }
+}
+
+function clearBulkSelection() {
+  _bulkSelected.clear();
+  document.getElementById('selectAllCheckbox').checked = false;
+  renderTabla();
+}
+
+function openBulkDeleteModal() {
+  if (_bulkSelected.size === 0) return;
+  document.getElementById('bulkDeleteCount').textContent = _bulkSelected.size;
+  document.getElementById('bulkDeletePlural').textContent = _bulkSelected.size === 1 ? '' : 'es';
+  document.getElementById('bulkDeleteConfirmBtn').disabled = false;
+  document.getElementById('bulkDeleteConfirmBtn').textContent = 'Eliminar';
+  document.getElementById('bulkDeleteModal').classList.add('open');
+}
+
+function closeBulkDeleteModal(event) {
+  if (event && event.target !== document.getElementById('bulkDeleteModal')) return;
+  document.getElementById('bulkDeleteModal').classList.remove('open');
+}
+
+async function executeBulkDelete() {
+  const btn = document.getElementById('bulkDeleteConfirmBtn');
+  btn.disabled = true;
+  btn.textContent = 'Eliminando...';
+
+  const ids = [..._bulkSelected];
+  let ok = 0, fail = 0;
+  for (const id of ids) {
+    try {
+      await CRM.deleteOportunidad(id);
+      ok++;
+    } catch (e) {
+      console.error('Error eliminando', id, e);
+      fail++;
+    }
+  }
+
+  closeBulkDeleteModal();
+  _bulkSelected.clear();
+
+  if (fail === 0) {
+    TOAST.success(`${ok} oportunidad${ok !== 1 ? 'es' : ''} eliminada${ok !== 1 ? 's' : ''} correctamente`);
+  } else {
+    TOAST.warning(`${ok} eliminada${ok !== 1 ? 's' : ''}, ${fail} con error`);
+  }
+
+  // Reload data
+  await initTabla();
+  CRM.invalidateCache();
 }
 
 function editFromTabla(id) {
