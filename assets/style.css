@@ -3,15 +3,15 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg: #f4f3f7; --surface: #ffffff; --accent: #8a38fe; --accent-dark: #6f2ad4;
-  --text: #0f0f0f; --text-muted: #888; --border: #e5e0f0;
+  --bg: #e2e0ec; --surface: #f0eef8; --accent: #8a38fe; --accent-dark: #6f2ad4;
+  --text: #1a1a2e; --text-muted: #6b6b80; --border: #cdc8dd;
   --danger: #ef4444; --success: #22c55e; --warning: #f59e0b;
   --sidebar-w: 240px; --sidebar-collapsed: 64px;
   --transition: 0.3s cubic-bezier(0.4,0,0.2,1);
   /* Glassmorphism */
-  --glass-bg: rgba(255, 255, 255, 0.55);
-  --glass-border: rgba(255, 255, 255, 0.5);
-  --glass-shadow: 0 8px 32px rgba(31, 38, 135, 0.07);
+  --glass-bg: rgba(230, 226, 240, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.45);
+  --glass-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
   --glass-blur: blur(16px);
   --radius-sm: 8px;
   --radius: 12px;
@@ -28,7 +28,7 @@ body.dark-mode {
 /* ── ANIMATED GRADIENT BACKGROUND ── */
 html, body {
   height: 100%; font-family: 'Montserrat', sans-serif;
-  background: linear-gradient(160deg, #ddd8f3 0%, #e8e5f5 20%, #f0edf8 40%, #e8e0f5 60%, #f4f3f7 80%, #ede9fe 100%);
+  background: linear-gradient(160deg, #c8c3db 0%, #d5d1e8 20%, #ddd8ec 40%, #d8d3ea 60%, #e2e0ec 80%, #d9d5e9 100%);
   color: var(--text); overflow: hidden;
 }
 
@@ -39,10 +39,10 @@ body::before {
   top: -50%; left: -50%;
   width: 200%; height: 200%;
   background:
-    radial-gradient(circle at 15% 45%, rgba(138, 56, 254, 0.1) 0%, transparent 45%),
-    radial-gradient(circle at 75% 15%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
-    radial-gradient(circle at 55% 80%, rgba(59, 130, 246, 0.07) 0%, transparent 45%),
-    radial-gradient(circle at 90% 70%, rgba(168, 85, 247, 0.06) 0%, transparent 35%);
+    radial-gradient(circle at 15% 45%, rgba(138, 56, 254, 0.14) 0%, transparent 45%),
+    radial-gradient(circle at 75% 15%, rgba(99, 102, 241, 0.11) 0%, transparent 40%),
+    radial-gradient(circle at 55% 80%, rgba(59, 130, 246, 0.1) 0%, transparent 45%),
+    radial-gradient(circle at 90% 70%, rgba(168, 85, 247, 0.09) 0%, transparent 35%);
   z-index: 0; pointer-events: none;
   animation: bgFloat 25s ease-in-out infinite alternate;
 }
@@ -69,7 +69,7 @@ body.dark-mode::before {
 /* ── SIDEBAR ── */
 .sidebar {
   width: var(--sidebar-w); min-width: var(--sidebar-w);
-  background: rgba(15, 15, 15, 0.82);
+  background: rgba(18, 18, 28, 0.88);
   backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
   border-right: 1px solid rgba(255,255,255,0.05);
   display: flex; flex-direction: column;
