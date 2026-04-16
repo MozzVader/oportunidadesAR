@@ -1,0 +1,61 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ═══════════════════════════════════════════
+    // HELPER: ¿Está autenticado?
+    // ═══════════════════════════════════════════
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // ═══════════════════════════════════════════
+    // HELPER: ¿Es admin? (lee perfil en Firestore)
+    // ═══════════════════════════════════════════
+    function isAdmin() {
+      return isAuth() &&
+        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil == 'admin';
+    }
+
+    // ═══════════════════════════════════════════
+    // HELPER: ¿Es el propio usuario?
+    // ═══════════════════════════════════════════
+    function isOwnUser(userId) {
+      return isAuth() && request.auth.uid == userId;
+    }
+
+    // ═══════════════════════════════════════════
+    // COLECCIÓN: oportunidades
+    //
+    // - Admin: lee, crea, edita y elimina todo
+    // - Usuario: lee todo, pero solo crea/edita
+    //   las suyas (responsable coincide o es
+    //   el creador). Solo admin elimina.
+    // ═══════════════════════════════════════════
+    match /oportunidades/{opoId} {
+      allow read:   if isAuth();
+      allow create: if isAuth()
+                     && (resource.data.responsable == get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.nombre
+                         || isAdmin());
+      allow update: if isAuth()
+                     && (isAdmin()
+                         || resource.data.responsable == get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.nombre);
+      allow delete: if isAdmin();
+    }
+
+    // ═══════════════════════════════════════════
+    // COLECCIÓN: usuarios
+    //
+    // - Admin: lee y edita todos
+    // - Cada usuario: lee y edita su propio perfil
+    // - Solo admin puede crear usuarios (desde
+    //   el panel de gestión)
+    // ═══════════════════════════════════════════
+    match /usuarios/{userId} {
+      allow read:   if isAuth() && (isAdmin() || isOwnUser(userId));
+      allow create: if isAdmin();
+      allow update: if isAuth() && (isAdmin() || isOwnUser(userId));
+      allow delete: if isAdmin();
+    }
+  }
+}
