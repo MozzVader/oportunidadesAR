@@ -30,6 +30,60 @@ function colorForValue(str) {
 }
 
 // ══════════════════════════════════════════════
+// PAGINATION
+// ══════════════════════════════════════════════
+const PER_PAGE = 20;
+
+function paginate(rows, page) {
+  const total = rows.length;
+  const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
+  const current = Math.min(Math.max(1, page), totalPages);
+  const start = (current - 1) * PER_PAGE;
+  const pageRows = rows.slice(start, start + PER_PAGE);
+  return { rows: pageRows, current, totalPages, total, start: start + 1, end: Math.min(start + PER_PAGE, total) };
+}
+
+function renderPagination(containerId, state, onPageChange) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  if (state.totalPages <= 1) { el.style.display = 'none'; return; }
+  el.style.display = 'flex';
+
+  const { current, totalPages, total, start, end } = state;
+  let pages = [];
+
+  // Always show first page
+  pages.push(1);
+  if (current > 3) pages.push('...');
+  for (let i = Math.max(2, current - 1); i <= Math.min(totalPages - 1, current + 1); i++) pages.push(i);
+  if (current < totalPages - 2) pages.push('...');
+  if (totalPages > 1) pages.push(totalPages);
+
+  const btns = pages.map(p => {
+    if (p === '...') return '<span class="page-ellipsis">...</span>';
+    return `<button class="page-btn${p === current ? ' active' : ''}" data-page="${p}">${p}</button>`;
+  }).join('');
+
+  el.innerHTML =
+    `<div class="pagination-info">${start}–${end} de ${total}</div>` +
+    `<div class="pagination-btns">` +
+      `<button class="page-btn" data-page="prev" ${current === 1 ? 'disabled' : ''}>←</button>` +
+      btns +
+      `<button class="page-btn" data-page="next" ${current === totalPages ? 'disabled' : ''}>→</button>` +
+    `</div>`;
+
+  el.querySelectorAll('.page-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const val = btn.dataset.page;
+      if (btn.disabled || btn.classList.contains('active')) return;
+      if (val === 'prev') onPageChange(current - 1);
+      else if (val === 'next') onPageChange(current + 1);
+      else onPageChange(parseInt(val));
+    });
+  });
+}
+
+// ══════════════════════════════════════════════
 // HELPERS
 // ══════════════════════════════════════════════
 function getGreeting() {
@@ -521,7 +575,7 @@ async function handleDelete() {
 // ══════════════════════════════════════════════
 // TODAS LAS OPORTUNIDADES
 // ══════════════════════════════════════════════
-let _tablaRows = [], _sortKey = 'fechaCreacion', _sortDir = -1;
+let _tablaRows = [], _sortKey = 'fechaCreacion', _sortDir = -1, _tablaPage = 1;
 
 async function initTabla() {
   document.getElementById('todasLoading').style.display = 'flex';
@@ -542,16 +596,19 @@ async function initTabla() {
   selC.innerHTML = '<option value="">Todos los clientes</option>';
   clientes.forEach(cl => selC.innerHTML += `<option>${cl}</option>`);
 
+  _tablaPage = 1;
   renderTabla();
 }
 
 function sortTabla(key) {
   if (_sortKey === key) _sortDir *= -1;
   else { _sortKey = key; _sortDir = 1; }
+  _tablaPage = 1;
   renderTabla();
 }
 
-function renderTabla() {
+function renderTabla(page) {
+  if (page !== undefined) _tablaPage = page;
   const q    = document.getElementById('t_search').value.trim().toLowerCase();
   const est  = document.getElementById('t_estado').value;
   const prac = document.getElementById('t_practica').value;
@@ -577,9 +634,11 @@ function renderTabla() {
   document.getElementById('todasCount').textContent = `${rows.length} oportunidad${rows.length !== 1 ? 'es' : ''}`;
   const body  = document.getElementById('todasBody');
   const empty = document.getElementById('todasEmpty');
-  if (rows.length === 0) { body.innerHTML = ''; empty.style.display = 'block'; return; }
+  if (rows.length === 0) { body.innerHTML = ''; empty.style.display = 'block'; document.getElementById('todasPagination').style.display = 'none'; return; }
   empty.style.display = 'none';
-  body.innerHTML = rows.map(r => `
+
+  const pg = paginate(rows, _tablaPage);
+  body.innerHTML = pg.rows.map(r => `
     <tr>
       <td class="col-id">${friendlyId(r)}</td>
       <td style="font-weight:600">${r.cliente || '—'}</td>
@@ -591,6 +650,8 @@ function renderTabla() {
         ${canEdit(r) ? `<button class="btn-sm" onclick="editFromTabla('${r.id}')">Editar</button>` : ''}
       </td>
     </tr>`).join('');
+
+  renderPagination('todasPagination', pg, (p) => renderTabla(p));
 }
 
 function editFromTabla(id) {
@@ -927,7 +988,7 @@ function showModalAlert(msg) {
 // ══════════════════════════════════════════════
 // MIS OPORTUNIDADES
 // ══════════════════════════════════════════════
-let _misRows = [], _misSortKey = 'fechaCreacion', _misSortDir = -1;
+let _misRows = [], _misSortKey = 'fechaCreacion', _misSortDir = -1, _misPage = 1;
 
 async function initMis() {
   document.getElementById('misLoading').style.display = 'flex';
@@ -937,6 +998,7 @@ async function initMis() {
   _misRows = raw.filter(r => r.responsableUid === session.uid);
   document.getElementById('misLoading').style.display = 'none';
   document.getElementById('misTable').style.display = 'block';
+  _misPage = 1;
   renderMis();
 }
 
@@ -948,10 +1010,12 @@ async function misRefresh() {
 function sortMis(key) {
   if (_misSortKey === key) _misSortDir *= -1;
   else { _misSortKey = key; _misSortDir = 1; }
+  _misPage = 1;
   renderMis();
 }
 
-function renderMis() {
+function renderMis(page) {
+  if (page !== undefined) _misPage = page;
   const q   = document.getElementById('mis_search').value.trim().toLowerCase();
   const est = document.getElementById('mis_estado').value;
   const rows = _misRows.filter(r => {
@@ -966,9 +1030,11 @@ function renderMis() {
 
   document.getElementById('misCount').textContent = `${rows.length} oportunidad${rows.length !== 1 ? 'es' : ''}`;
   const body = document.getElementById('misBody'), empty = document.getElementById('misEmpty');
-  if (rows.length === 0) { body.innerHTML = ''; empty.style.display = 'block'; return; }
+  if (rows.length === 0) { body.innerHTML = ''; empty.style.display = 'block'; document.getElementById('misPagination').style.display = 'none'; return; }
   empty.style.display = 'none';
-  body.innerHTML = rows.map(r => `
+
+  const pg = paginate(rows, _misPage);
+  body.innerHTML = pg.rows.map(r => `
     <tr>
       <td class="col-id">${friendlyId(r)}</td>
       <td style="font-weight:600">${r.cliente || '—'}</td>
@@ -979,6 +1045,8 @@ function renderMis() {
         <button class="btn-sm" onclick="editFromTabla('${r.id}')">Editar</button>
       </td>
     </tr>`).join('');
+
+  renderPagination('misPagination', pg, (p) => renderMis(p));
 }
 
 // ══════════════════════════════════════════════

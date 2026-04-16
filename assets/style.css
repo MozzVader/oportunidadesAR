@@ -288,6 +288,16 @@ body.dark-mode tr:hover td { background:rgba(138,56,254,0.05); }
 .spinner { width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--text);border-radius:50%;animation:spin 0.7s linear infinite; }
 @keyframes spin { to { transform:rotate(360deg); } }
 
+/* ── PAGINACION ── */
+.pagination { display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-top:1px solid var(--border);font-size:13px;color:var(--text-muted); }
+.pagination-info { font-weight:500; }
+.pagination-btns { display:flex;gap:4px;align-items:center; }
+.page-btn { font-family:'Montserrat',sans-serif;font-size:12px;font-weight:600;padding:6px 12px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:transparent;cursor:pointer;color:var(--text-muted);transition:all 0.2s; }
+.page-btn:hover:not(:disabled):not(.active) { border-color:var(--text);color:var(--text); }
+.page-btn.active { background:var(--accent);border-color:var(--accent);color:#fff; }
+.page-btn:disabled { opacity:0.3;cursor:not-allowed; }
+.page-ellipsis { padding:6px 8px;color:var(--text-muted);font-weight:600;user-select:none; }
+
 /* SKELETON LOADING */
 .skeleton { background:linear-gradient(90deg,var(--border) 25%,color-mix(in srgb,var(--surface) 80%,var(--border)) 50%,var(--border) 75%); background-size:200% 100%; animation:shimmer 1.5s ease-in-out infinite; border-radius:var(--radius-sm); }
 @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }

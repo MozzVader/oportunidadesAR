@@ -269,8 +269,8 @@
           </div>
         </div>
         <div class="filters">
-          <input type="text" id="mis_search" placeholder="Buscar..." oninput="renderMis()"/>
-          <select id="mis_estado" onchange="renderMis()"><option value="">Todos los estados</option><option>En Desarrollo</option><option>Entregada</option><option>Finalizada</option><option>Pausa</option><option>Perdido</option><option>Ganado</option></select>
+          <input type="text" id="mis_search" placeholder="Buscar..." oninput="renderMis(1)"/>
+          <select id="mis_estado" onchange="renderMis(1)"><option value="">Todos los estados</option><option>En Desarrollo</option><option>Entregada</option><option>Finalizada</option><option>Pausa</option><option>Perdido</option><option>Ganado</option></select>
         </div>
         <div class="card" style="padding:0">
           <div id="misLoading" class="loading" style="padding:40px 28px"><div class="spinner"></div> Cargando datos...</div>
@@ -288,6 +288,7 @@
               </table>
             </div>
             <div id="misEmpty" class="empty" style="display:none"><div class="empty-icon">📋</div><div class="empty-text">No tenés oportunidades cargadas aún</div></div>
+            <div id="misPagination" class="pagination" style="display:none"></div>
           </div>
         </div>
       </div>
@@ -302,11 +303,11 @@
           </div>
         </div>
         <div class="filters">
-          <input type="text" id="t_search" placeholder="Buscar..." oninput="renderTabla()"/>
-          <select id="t_cliente" onchange="renderTabla()"><option value="">Todos los clientes</option></select>
-          <select id="t_estado" onchange="renderTabla()"><option value="">Todos los estados</option><option>En Desarrollo</option><option>Entregada</option><option>Finalizada</option><option>Pausa</option><option>Perdido</option><option>Ganado</option></select>
-          <select id="t_practica" onchange="renderTabla()"><option value="">Todas las prácticas</option><option>AM</option><option>CES</option><option>Consultoría</option><option>DWP</option><option>Enablon</option><option>HCI</option><option>IA</option><option>SAP</option><option>Testing</option></select>
-          <select id="t_responsable" onchange="renderTabla()"><option value="">Todos los responsables</option></select>
+          <input type="text" id="t_search" placeholder="Buscar..." oninput="renderTabla(1)"/>
+          <select id="t_cliente" onchange="renderTabla(1)"><option value="">Todos los clientes</option></select>
+          <select id="t_estado" onchange="renderTabla(1)"><option value="">Todos los estados</option><option>En Desarrollo</option><option>Entregada</option><option>Finalizada</option><option>Pausa</option><option>Perdido</option><option>Ganado</option></select>
+          <select id="t_practica" onchange="renderTabla(1)"><option value="">Todas las prácticas</option><option>AM</option><option>CES</option><option>Consultoría</option><option>DWP</option><option>Enablon</option><option>HCI</option><option>IA</option><option>SAP</option><option>Testing</option></select>
+          <select id="t_responsable" onchange="renderTabla(1)"><option value="">Todos los responsables</option></select>
         </div>
         <div class="card" style="padding:0">
           <div id="todasLoading" class="loading" style="padding:40px 28px"><div class="spinner"></div> Cargando datos...</div>
@@ -325,6 +326,7 @@
               </table>
             </div>
             <div id="todasEmpty" class="empty" style="display:none"><div class="empty-icon">📋</div><div class="empty-text">Sin oportunidades</div></div>
+            <div id="todasPagination" class="pagination" style="display:none"></div>
           </div>
         </div>
       </div>

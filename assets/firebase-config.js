@@ -9,12 +9,12 @@
 // 6. Pegar los valores abajo
 
 const firebaseConfig = {
-    apiKey: "AIzaSyAIKNoo7BtQOpGIJu5y9d6B2F_Ly_SNcYY",
-    authDomain: "oportunidadesar.firebaseapp.com",
-    projectId: "oportunidadesar",
-    storageBucket: "oportunidadesar.firebasestorage.app",
-    messagingSenderId: "422886172867",
-    appId: "1:422886172867:web:4fa03b83878f5442851a76"
+  apiKey:            "TU_API_KEY_AQUI",
+  authDomain:        "TU_PROYECTO.firebaseapp.com",
+  projectId:         "TU_PROYECTO_ID",
+  storageBucket:     "TU_PROYECTO.appspot.com",
+  messagingSenderId: "TU_SENDER_ID",
+  appId:             "TU_APP_ID"
 };
 
 // Inicializar Firebase
