@@ -248,14 +248,14 @@ body.dark-mode .btn-sm { color: var(--text); border-color: var(--border); }
 .badge-activa { background:rgba(220,252,231,0.7);backdrop-filter:blur(4px);color:#166534; }
 .badge-pausa { background:rgba(254,249,195,0.7);backdrop-filter:blur(4px);color:#a16207; }
 .badge-cerrada { background:rgba(241,245,249,0.7);backdrop-filter:blur(4px);color:#64748b; }
-body.dark-mode .badge-prospecto { background:rgba(30,41,59,0.6); }
-body.dark-mode .badge-propuesta { background:rgba(30,58,138,0.6); }
-body.dark-mode .badge-calificación { background:rgba(113,63,18,0.6); }
-body.dark-mode .badge-ganado { background:rgba(22,101,52,0.6); }
-body.dark-mode .badge-perdido { background:rgba(127,29,29,0.6); }
-body.dark-mode .badge-activa { background:rgba(22,101,52,0.6); }
-body.dark-mode .badge-pausa { background:rgba(113,63,18,0.6); }
-body.dark-mode .badge-cerrada { background:rgba(30,41,59,0.6); }
+body.dark-mode .badge-prospecto { background:rgba(30,41,59,0.6); color:#94a3b8; }
+body.dark-mode .badge-propuesta { background:rgba(30,58,138,0.6); color:#93c5fd; }
+body.dark-mode .badge-calificación { background:rgba(113,63,18,0.6); color:#fde68a; }
+body.dark-mode .badge-ganado { background:rgba(22,101,52,0.6); color:#86efac; }
+body.dark-mode .badge-perdido { background:rgba(127,29,29,0.6); color:#fca5a5; }
+body.dark-mode .badge-activa { background:rgba(22,101,52,0.6); color:#86efac; }
+body.dark-mode .badge-pausa { background:rgba(113,63,18,0.6); color:#fde68a; }
+body.dark-mode .badge-cerrada { background:rgba(30,41,59,0.6); color:#94a3b8; }
 .alert { padding:12px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;margin-bottom:16px;display:none; }
 .alert-success { background:rgba(220,252,231,0.7);backdrop-filter:blur(4px);color:#166534;border:1px solid #bbf7d0; }
 .alert-error { background:rgba(254,226,226,0.7);backdrop-filter:blur(4px);color:#991b1b;border:1px solid #fecaca; }
