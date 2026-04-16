@@ -240,8 +240,8 @@ const TOAST = (() => {
 // ══════════════════════════════════════════════
 const PAGE_TITLES = {
   home: 'Inicio', nueva: 'Nueva Oportunidad', modificar: 'Modificar Oportunidad',
-  mis: 'Mis Oportunidades', todas: 'Ver Todas', estadisticas: 'Estadísticas',
-  perfil: 'Mi Perfil', usuarios: 'Administración'
+  mis: 'Mis Oportunidades', todas: 'Ver Todas', kanban: 'Kanban',
+  estadisticas: 'Estadísticas', perfil: 'Mi Perfil', usuarios: 'Administración'
 };
 
 function navigate(btn) {
@@ -258,6 +258,7 @@ function onPageEnter(page) {
   if      (page === 'home')         renderHome();
   else if (page === 'mis')          initMis();
   else if (page === 'todas')        initTabla();
+  else if (page === 'kanban')       initKanban();
   else if (page === 'estadisticas') renderStats();
   else if (page === 'modificar')    initModSearch();
   else if (page === 'perfil')       renderPerfil();
@@ -660,7 +661,7 @@ function editFromTabla(id) {
 }
 
 function verOportunidad(id) {
-  const r = _tablaRows.find(x => x.id === id);
+  let r = _tablaRows.find(x => x.id === id) || _kanbanRows.find(x => x.id === id);
   if (!r) return;
 
   document.getElementById('verModalId').textContent = friendlyId(r);
@@ -1216,6 +1217,176 @@ function updateImportProgress(current, total) {
   document.getElementById('importProgressBar').style.width = pct + '%';
   document.getElementById('importProgressCount').textContent = `${current}/${total}`;
   document.getElementById('importProgressText').textContent = `Procesando fila ${current}...`;
+}
+
+// ══════════════════════════════════════════════
+// KANBAN BOARD
+// ══════════════════════════════════════════════
+let _kanbanRows = [];
+let _kanbanDragId = null;
+
+async function initKanban() {
+  const loading = document.getElementById('kanbanLoading');
+  const board = document.getElementById('kanbanBoard');
+  loading.style.display = 'flex';
+  board.style.display = 'none';
+
+  const session = AUTH.getSession();
+  const raw = await CRM.getData();
+  _kanbanRows = session.perfil === 'admin' ? raw : raw.filter(r => r.responsableUid === session.uid);
+
+  // Populate responsables filter (admin only)
+  const selR = document.getElementById('k_responsable');
+  const filters = document.getElementById('kanbanFilters');
+  if (session.perfil === 'admin') {
+    filters.style.display = 'flex';
+    const resps = [...new Set(_kanbanRows.map(r => r.responsable).filter(Boolean))].sort();
+    selR.innerHTML = '<option value="">Todos los responsables</option>';
+    resps.forEach(r => selR.innerHTML += `<option>${r}</option>`);
+  } else {
+    filters.style.display = 'flex';
+    selR.style.display = 'none';
+  }
+
+  loading.style.display = 'none';
+  board.style.display = 'flex';
+  renderKanban();
+}
+
+function renderKanban() {
+  const q = document.getElementById('k_search').value.trim().toLowerCase();
+  const resp = document.getElementById('k_responsable').value;
+  const session = AUTH.getSession();
+
+  let rows = _kanbanRows;
+  if (resp) rows = rows.filter(r => r.responsable === resp);
+  if (q) rows = rows.filter(r => {
+    const h = [r.codigo, r.nombre, r.cliente, r.responsable].join(' ').toLowerCase();
+    return h.includes(q);
+  });
+
+  const board = document.getElementById('kanbanBoard');
+  board.innerHTML = CRM.ESTADOS.map(estado => {
+    const color = CRM.ESTADO_COLORS[estado];
+    const cards = rows.filter(r => r.estado === estado);
+    return `
+      <div class="kanban-col" data-estado="${estado}">
+        <div class="kanban-col-header">
+          <div class="kanban-col-title">
+            <div class="kanban-col-dot" style="background:${color}"></div>
+            ${estado}
+            <span class="kanban-col-count">${cards.length}</span>
+          </div>
+        </div>
+        <div class="kanban-col-body" data-estado="${estado}">
+          ${cards.length === 0 ? '<div class="kanban-col-empty">Sin oportunidades</div>' :
+            cards.map(r => renderKanbanCard(r)).join('')}
+        </div>
+      </div>`;
+  }).join('');
+
+  // Setup drag & drop on column bodies
+  board.querySelectorAll('.kanban-col-body').forEach(colBody => {
+    colBody.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      colBody.classList.add('dragover');
+      colBody.closest('.kanban-col').classList.add('dragover');
+    });
+    colBody.addEventListener('dragleave', (e) => {
+      if (!colBody.contains(e.relatedTarget)) {
+        colBody.classList.remove('dragover');
+        colBody.closest('.kanban-col').classList.remove('dragover');
+      }
+    });
+    colBody.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      colBody.classList.remove('dragover');
+      colBody.closest('.kanban-col').classList.remove('dragover');
+      const newEstado = colBody.dataset.estado;
+      if (!_kanbanDragId || !_kanbanDragEstado) return;
+      if (_kanbanDragEstado === newEstado) return;
+      await handleKanbanDrop(_kanbanDragId, newEstado);
+      _kanbanDragId = null;
+      _kanbanDragEstado = null;
+    });
+  });
+}
+
+function renderKanbanCard(r) {
+  const tcvDisplay = r.tcv ? Number(r.tcv).toLocaleString('es-AR') + (r.currency ? ' ' + r.currency : '') : '—';
+  return `
+    <div class="kanban-card" draggable="true" data-id="${r.id}" data-estado="${r.estado}">
+      <div class="kanban-card-id">${friendlyId(r)}</div>
+      <div class="kanban-card-name">${r.nombre || '—'}</div>
+      <div class="kanban-card-client">${r.cliente || '—'}</div>
+      <div class="kanban-card-meta">
+        <span>${r.responsable || '—'}</span>
+        <span class="kanban-card-tcv">${tcvDisplay}</span>
+      </div>
+    </div>`;
+}
+
+// Setup card drag events via event delegation
+document.addEventListener('dragstart', (e) => {
+  const card = e.target.closest('.kanban-card');
+  if (!card) return;
+  _kanbanDragId = card.dataset.id;
+  _kanbanDragEstado = card.dataset.estado;
+  card.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', card.dataset.id);
+});
+
+document.addEventListener('dragend', (e) => {
+  const card = e.target.closest('.kanban-card');
+  if (card) card.classList.remove('dragging');
+  document.querySelectorAll('.kanban-col-body.dragover, .kanban-col.dragover').forEach(el => {
+    el.classList.remove('dragover');
+  });
+});
+
+// Click on card to view details
+document.addEventListener('click', (e) => {
+  const card = e.target.closest('.kanban-card');
+  if (!card || e.target.closest('.kanban-card.dragging')) return;
+  const id = card.dataset.id;
+  // Make sure _tablaRows is loaded for verOportunidad
+  if (_kanbanRows.length > 0 && _kanbanDragId !== id) {
+    verOportunidad(id);
+  }
+});
+
+async function handleKanbanDrop(id, newEstado) {
+  const r = _kanbanRows.find(x => x.id === id);
+  if (!r) return;
+
+  const oldEstado = r.estado;
+  if (oldEstado === newEstado) return;
+
+  // Check edit permissions
+  const session = AUTH.getSession();
+  if (session.perfil !== 'admin' && r.responsableUid !== session.uid) {
+    TOAST.error('No tenés permisos para mover esta oportunidad.');
+    return;
+  }
+
+  // Optimistic update
+  r.estado = newEstado;
+  renderKanban();
+
+  try {
+    await CRM.updateOportunidad(id, { estado: newEstado });
+    TOAST.success(`"${r.nombre}" → ${newEstado}`);
+    // Refresh data in background
+    const fresh = await CRM.getData();
+    _kanbanRows = session.perfil === 'admin' ? fresh : fresh.filter(x => x.responsableUid === session.uid);
+    renderKanban();
+  } catch(err) {
+    // Rollback on error
+    r.estado = oldEstado;
+    renderKanban();
+    TOAST.error('Error al actualizar el estado.');
+  }
 }
 
 // ══════════════════════════════════════════════
