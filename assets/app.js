@@ -1266,6 +1266,10 @@ async function executeImport() {
       if (val !== undefined && val !== '') data[field] = val;
     });
 
+    // Convert dates from Excel format to YYYY-MM-DD strings
+    if (data.fechaInicio) data.fechaInicio = toInputDate(data.fechaInicio);
+    if (data.fechaEntrega) data.fechaEntrega = toInputDate(data.fechaEntrega);
+
     // Skip rows without a name
     if (!data.nombre) {
       fail++;
