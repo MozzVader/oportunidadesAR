@@ -266,8 +266,9 @@ body.dark-mode .btn-sm { color: var(--text); border-color: var(--border); }
 .badge-cancelada  { background:rgba(241,245,249,0.75);backdrop-filter:blur(4px);color:#475569; }
 .badge-nogo       { background:rgba(237,233,254,0.75);backdrop-filter:blur(4px);color:#5b21b6; }
 /* ── Perfil de Usuario ── */
-.badge-admin   { background:rgba(233,213,255,0.75);backdrop-filter:blur(4px);color:#6b21a8; }
-.badge-usuario { background:rgba(224,231,255,0.75);backdrop-filter:blur(4px);color:#3730a3; }
+.badge-admin     { background:rgba(233,213,255,0.75);backdrop-filter:blur(4px);color:#6b21a8; }
+.badge-usuario   { background:rgba(224,231,255,0.75);backdrop-filter:blur(4px);color:#3730a3; }
+.badge-readonly  { background:rgba(241,245,249,0.75);backdrop-filter:blur(4px);color:#64748b; }
 /* ── Estado de Cuenta ── */
 .badge-activa  { background:rgba(220,252,231,0.75);backdrop-filter:blur(4px);color:#166534; }
 .badge-cerrada { background:rgba(241,245,249,0.75);backdrop-filter:blur(4px);color:#475569; }
@@ -282,6 +283,7 @@ body.dark-mode .badge-cancelada  { background:rgba(30,41,59,0.5); color:#94a3b8;
 body.dark-mode .badge-nogo       { background:rgba(91,33,182,0.4); color:#c4b5fd; }
 body.dark-mode .badge-admin      { background:rgba(107,33,168,0.4); color:#e9d5ff; }
 body.dark-mode .badge-usuario    { background:rgba(55,48,163,0.4); color:#c7d2fe; }
+body.dark-mode .badge-readonly   { background:rgba(51,65,85,0.5); color:#94a3b8; }
 body.dark-mode .badge-activa     { background:rgba(22,101,52,0.5); color:#86efac; }
 body.dark-mode .badge-cerrada    { background:rgba(30,41,59,0.5); color:#94a3b8; }
 .alert { padding:12px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;margin-bottom:16px;display:none; }

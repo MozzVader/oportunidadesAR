@@ -133,8 +133,18 @@ function friendlyId(r) {
 
 function canEdit(r) {
   const s = AUTH.getSession();
-  if (!s) return false;
+  if (!s || s.perfil === 'solo lectura') return false;
   return s.perfil === 'admin' || r.responsableUid === s.uid;
+}
+
+function canDelete() {
+  const s = AUTH.getSession();
+  return s && s.perfil === 'admin';
+}
+
+function isReadOnly() {
+  const s = AUTH.getSession();
+  return s && s.perfil === 'solo lectura';
 }
 
 function badgeEstado(e) {
@@ -245,9 +255,13 @@ const PAGE_TITLES = {
 };
 
 function navigate(btn) {
+  const page = btn.dataset.page;
+  if (isReadOnly() && ['nueva', 'modificar', 'mis'].includes(page)) {
+    TOAST.warning('Tu perfil es de solo lectura.');
+    return;
+  }
   document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
   btn.classList.add('active');
-  const page = btn.dataset.page;
   document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
   document.getElementById('page-' + page).classList.add('active');
   document.getElementById('pageTitle').textContent = PAGE_TITLES[page] || page;
@@ -386,6 +400,7 @@ function calcFX(prefix) {
 // ══════════════════════════════════════════════
 async function handleNueva(e) {
   e.preventDefault();
+  if (isReadOnly()) { TOAST.error('No tenés permisos para crear oportunidades.'); return; }
   const btn = document.getElementById('n_submitBtn');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner-inline"></span>Guardando...';
@@ -521,6 +536,15 @@ function backToModSearch() {
 async function handleUpdate(e) {
   e.preventDefault();
   const id  = document.getElementById('e_id').value;
+  if (isReadOnly()) { TOAST.error('No tenés permisos para modificar.'); return; }
+  const session = AUTH.getSession();
+  if (session && session.perfil !== 'admin') {
+    const r = _modRows.find(x => x.id === id);
+    if (r && r.responsableUid !== session.uid) {
+      TOAST.error('Solo podés editar oportunidades que te pertenecen.');
+      return;
+    }
+  }
   const btn = document.getElementById('e_submitBtn');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner-inline"></span>Guardando...';
@@ -558,6 +582,7 @@ async function handleUpdate(e) {
 }
 
 async function handleDelete() {
+  if (!canDelete()) { TOAST.error('No tenés permisos para eliminar.'); return; }
   const id   = document.getElementById('e_id').value;
   const name = document.getElementById('modEditTitle').textContent;
   if (!confirm(`¿Seguro que querés eliminar "${name}"?`)) return;
@@ -735,6 +760,7 @@ function closeBulkDeleteModal(event) {
 }
 
 async function executeBulkDelete() {
+  if (!canDelete()) { TOAST.error('No tenés permisos para eliminar.'); return; }
   const btn = document.getElementById('bulkDeleteConfirmBtn');
   btn.disabled = true;
   btn.textContent = 'Eliminando...';
@@ -777,6 +803,7 @@ function verOportunidad(id) {
   document.getElementById('verModalId').textContent = friendlyId(r);
   document.getElementById('verModalTitle').textContent = r.nombre || '—';
   document.getElementById('verModalEditBtn').setAttribute('onclick', `closeVerModal(); editFromTabla('${id}')`);
+  document.getElementById('verModalEditBtn').style.display = canEdit(r) ? '' : 'none';
 
   const fmtVal = v => v || '—';
   const fmtEURv = v => v ? '€ ' + parseFloat(v).toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '—';
@@ -936,13 +963,14 @@ async function renderStats() {
 function renderPerfil() {
   const s = AUTH.getSession();
   if (!s) return;
-  const perfBadge = s.perfil === 'admin' ? 'badge-admin' : 'badge-usuario';
+  const perfBadge = s.perfil === 'admin' ? 'badge-admin' : s.perfil === 'solo lectura' ? 'badge-readonly' : 'badge-usuario';
+  const perfLabel = s.perfil === 'solo lectura' ? 'Solo Lectura' : s.perfil;
   document.getElementById('perfilInfo').innerHTML =
     `<div style="display:flex;align-items:center;gap:16px;margin-bottom:24px">
       <div style="width:56px;height:56px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;flex-shrink:0">${s.nombre.split(' ').map(n => n[0]).slice(0, 2).join('')}</div>
       <div><div style="font-size:16px;font-weight:700">${s.nombre}</div><div style="font-size:12px;color:var(--text-muted);margin-top:2px">${s.email}</div></div>
     </div>
-    ${infoRow('Perfil', `<span class="badge ${perfBadge}">${s.perfil}</span>`)}
+    ${infoRow('Perfil', `<span class="badge ${perfBadge}">${perfLabel}</span>`)}
     ${infoRow('Estado', '<span class="badge badge-activa">Activo</span>')}`;
   updateThemeUI();
 }
@@ -1003,7 +1031,7 @@ async function loadUsuarios() {
     <tr>
       <td style="font-weight:600">${u.nombre}</td>
       <td style="color:var(--text-muted);font-size:12px">${u.email}</td>
-      <td><span class="badge ${u.perfil === 'admin' ? 'badge-admin' : 'badge-usuario'}">${u.perfil}</span></td>
+      <td><span class="badge ${u.perfil === 'admin' ? 'badge-admin' : u.perfil === 'solo lectura' ? 'badge-readonly' : 'badge-usuario'}">${u.perfil === 'solo lectura' ? 'Solo Lectura' : u.perfil}</span></td>
       <td><span class="badge ${u.activo ? 'badge-activa' : 'badge-cerrada'}">${u.activo ? 'Activo' : 'Inactivo'}</span></td>
       <td style="text-align:center"><button class="btn-sm" onclick="openUserModal('edit','${u.uid}')">Editar</button></td>
     </tr>`).join('');
@@ -1436,7 +1464,7 @@ function renderKanbanCard(r) {
   const color = CRM.ESTADO_COLORS[r.estado] || 'var(--border)';
   const tcvDisplay = r.tcv ? Number(r.tcv).toLocaleString('es-AR') + (r.currency ? ' ' + r.currency : '') : '—';
   return `
-    <div class="kanban-card" draggable="true" data-id="${r.id}" data-estado="${r.estado}" style="border-left-color:${color}">
+    <div class="kanban-card"${isReadOnly() ? '' : ' draggable="true"'} data-id="${r.id}" data-estado="${r.estado}" style="border-left-color:${color}">
       <div class="kanban-card-id">${friendlyId(r)}</div>
       <div class="kanban-card-client">${r.cliente || '—'}</div>
       <div class="kanban-card-name">${r.nombre || '—'}</div>
@@ -1478,6 +1506,7 @@ document.addEventListener('click', (e) => {
 });
 
 async function handleKanbanDrop(id, newEstado) {
+  if (isReadOnly()) { TOAST.error('No tenés permisos para mover oportunidades.'); return; }
   const r = _kanbanRows.find(x => x.id === id);
   if (!r) return;
 
@@ -1575,6 +1604,35 @@ function renderMis(page) {
 }
 
 // ══════════════════════════════════════════════
+// CHECK USER ACTIVE STATUS
+// ══════════════════════════════════════════════
+async function checkUserActive() {
+  const session = AUTH.getSession();
+  if (!session) return;
+  try {
+    const doc = await firebase.firestore().collection('usuarios').doc(session.uid).get();
+    if (doc.exists) {
+      const data = doc.data();
+      if (data.activo === false) {
+        TOAST.error('Tu cuenta ha sido desactivada por un administrador.');
+        setTimeout(() => { AUTH.logout(); }, 2500);
+        return;
+      }
+      // Refrescar datos de sesión con lo más reciente de Firestore
+      session.perfil = data.perfil || session.perfil;
+      session.nombre = data.nombre || session.nombre;
+      session.email  = data.email  || session.email;
+      document.getElementById('userName').textContent = session.nombre.split(' ').slice(0, 2).join(' ');
+      const perfLabels = { 'admin': 'Admin', 'usuario': 'Usuario', 'solo lectura': 'Solo Lectura' };
+      document.getElementById('userPerfil').textContent = perfLabels[session.perfil] || session.perfil;
+      document.getElementById('userAvatar').textContent = session.nombre.split(' ').map(n => n[0]).slice(0, 2).join('');
+    }
+  } catch(e) {
+    console.error('Error verificando estado del usuario:', e);
+  }
+}
+
+// ══════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════
 function initApp() {
@@ -1583,10 +1641,23 @@ function initApp() {
   if (!session) return;
 
   // User info
+  const perfLabels = { 'admin': 'Admin', 'usuario': 'Usuario', 'solo lectura': 'Solo Lectura' };
   document.getElementById('userAvatar').textContent = session.nombre.split(' ').map(n => n[0]).slice(0, 2).join('');
   document.getElementById('userName').textContent   = session.nombre.split(' ').slice(0, 2).join(' ');
-  document.getElementById('userPerfil').textContent = session.perfil;
+  document.getElementById('userPerfil').textContent = perfLabels[session.perfil] || session.perfil;
   if (session.perfil === 'admin') document.getElementById('btnUsuarios').style.display = 'flex';
+
+  // Role-based UI: Solo Lectura
+  if (session.perfil === 'solo lectura') {
+    // Ocultar secciones del sidebar
+    document.querySelectorAll('[data-page="nueva"], [data-page="modificar"], [data-page="mis"]').forEach(el => {
+      el.style.display = 'none';
+    });
+    // Ocultar todos los botones "Nueva"
+    document.querySelectorAll('.btn-new-opp').forEach(el => {
+      el.style.display = 'none';
+    });
+  }
 
   // Sidebar toggle
   document.getElementById('toggleBtn').addEventListener('click', () =>
@@ -1600,6 +1671,10 @@ function initApp() {
   // Connection check
   checkConexion();
   setInterval(checkConexion, 60000);
+
+  // Check user active status periodically (cada 2 minutos)
+  checkUserActive();
+  setInterval(checkUserActive, 120000);
 
   // Real-time listener: si cambian datos en Firestore, actualizar
   CRM.onOportunidadesChange((freshData) => {
