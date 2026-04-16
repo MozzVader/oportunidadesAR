@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>PRESALES AR</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-  <link href="assets/style.css?v=10" rel="stylesheet"/>
+  <link href="assets/style.css?v=11" rel="stylesheet"/>
   <!-- External Libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
@@ -156,7 +156,7 @@
               <div class="section-title">BID</div>
               <div class="two-col-form" style="margin-bottom:18px">
                 <div class="form-group"><label>Responsable *</label><input type="text" id="n_responsable" required/></div>
-                <div class="form-group"><label>Estado *</label><select id="n_estado" required><option value="">— Seleccionar —</option><option>En Desarrollo</option><option>Entregada</option><option>Finalizada</option><option>Pausa</option><option>Perdido</option><option>Ganado</option></select></div>
+                <div class="form-group"><label>Estado *</label><select id="n_estado" required><option value="">— Seleccionar —</option><option>En Desarrollo</option><option>Entregada</option><option>Finalizada</option><option>Pausa</option><option>Perdida</option><option>Ganada</option><option>Cancelada</option><option>No Go</option></select></div>
               </div>
               <div class="two-col-form" style="margin-bottom:18px">
                 <div class="form-group"><label>Fecha de Inicio *</label><input type="date" id="n_fechaInicio" required/></div>
@@ -226,7 +226,7 @@
                 <div class="section-title">BID</div>
                 <div class="two-col-form" style="margin-bottom:18px">
                   <div class="form-group"><label>Responsable *</label><input type="text" id="e_responsable" required/></div>
-                  <div class="form-group"><label>Estado *</label><select id="e_estado" required><option value="">— Seleccionar —</option><option>En Desarrollo</option><option>Entregada</option><option>Finalizada</option><option>Pausa</option><option>Perdido</option><option>Ganado</option></select></div>
+                  <div class="form-group"><label>Estado *</label><select id="e_estado" required><option value="">— Seleccionar —</option><option>En Desarrollo</option><option>Entregada</option><option>Finalizada</option><option>Pausa</option><option>Perdida</option><option>Ganada</option><option>Cancelada</option><option>No Go</option></select></div>
                 </div>
                 <div class="two-col-form" style="margin-bottom:18px">
                   <div class="form-group"><label>Fecha de Inicio *</label><input type="date" id="e_fechaInicio" required/></div>
@@ -274,7 +274,7 @@
         </div>
         <div class="filters">
           <input type="text" id="mis_search" placeholder="Buscar..." oninput="renderMis(1)"/>
-          <select id="mis_estado" onchange="renderMis(1)"><option value="">Todos los estados</option><option>En Desarrollo</option><option>Entregada</option><option>Finalizada</option><option>Pausa</option><option>Perdido</option><option>Ganado</option></select>
+          <select id="mis_estado" onchange="renderMis(1)"><option value="">Todos los estados</option><option>En Desarrollo</option><option>Entregada</option><option>Finalizada</option><option>Pausa</option><option>Perdida</option><option>Ganada</option><option>Cancelada</option><option>No Go</option></select>
         </div>
         <div class="card" style="padding:0">
           <div id="misLoading" class="loading" style="padding:40px 28px"><div class="spinner"></div> Cargando datos...</div>
@@ -309,7 +309,7 @@
         <div class="filters">
           <input type="text" id="t_search" placeholder="Buscar..." oninput="renderTabla(1)"/>
           <select id="t_cliente" onchange="renderTabla(1)"><option value="">Todos los clientes</option></select>
-          <select id="t_estado" onchange="renderTabla(1)"><option value="">Todos los estados</option><option>En Desarrollo</option><option>Entregada</option><option>Finalizada</option><option>Pausa</option><option>Perdido</option><option>Ganado</option></select>
+          <select id="t_estado" onchange="renderTabla(1)"><option value="">Todos los estados</option><option>En Desarrollo</option><option>Entregada</option><option>Finalizada</option><option>Pausa</option><option>Perdida</option><option>Ganada</option><option>Cancelada</option><option>No Go</option></select>
           <select id="t_practica" onchange="renderTabla(1)"><option value="">Todas las prácticas</option><option>AM</option><option>CES</option><option>Consultoría</option><option>DWP</option><option>Enablon</option><option>HCI</option><option>IA</option><option>SAP</option><option>Testing</option></select>
           <select id="t_responsable" onchange="renderTabla(1)"><option value="">Todos los responsables</option></select>
         </div>
