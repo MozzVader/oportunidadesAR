@@ -138,7 +138,7 @@ function canEdit(r) {
 }
 
 function badgeEstado(e) {
-  return { 'En Desarrollo': 'badge-desarrollo', 'Entregada': 'badge-entregada', 'Finalizada': 'badge-finalizada', 'Pausa': 'badge-pausa', 'Perdido': 'badge-perdido', 'Ganado': 'badge-ganado' }[e] || '';
+  return { 'En Desarrollo': 'badge-desarrollo', 'Entregada': 'badge-entregada', 'Finalizada': 'badge-finalizada', 'Pausa': 'badge-pausa', 'Perdida': 'badge-perdida', 'Ganada': 'badge-ganada', 'Cancelada': 'badge-cancelada', 'No Go': 'badge-nogo' }[e] || '';
 }
 
 function showAlert(id, msg, type) {
@@ -1257,6 +1257,7 @@ function renderKanban() {
   const q = document.getElementById('k_search').value.trim().toLowerCase();
   const resp = document.getElementById('k_responsable').value;
   const session = AUTH.getSession();
+  const KANBAN_COLS = ['En Desarrollo', 'Entregada', 'Finalizada', 'Pausa', 'Perdida', 'Ganada'];
 
   let rows = _kanbanRows;
   if (resp) rows = rows.filter(r => r.responsable === resp);
@@ -1266,7 +1267,7 @@ function renderKanban() {
   });
 
   const board = document.getElementById('kanbanBoard');
-  board.innerHTML = CRM.ESTADOS.map(estado => {
+  board.innerHTML = KANBAN_COLS.map(estado => {
     const color = CRM.ESTADO_COLORS[estado];
     const cards = rows.filter(r => r.estado === estado);
     return `

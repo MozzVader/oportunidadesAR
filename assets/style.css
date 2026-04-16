@@ -246,8 +246,10 @@ body.dark-mode .btn-sm { color: var(--text); border-color: var(--border); }
 .badge-entregada  { background:rgba(219,234,254,0.75);backdrop-filter:blur(4px);color:#1e40af; }
 .badge-finalizada { background:rgba(220,252,231,0.75);backdrop-filter:blur(4px);color:#166534; }
 .badge-pausa      { background:rgba(254,231,179,0.75);backdrop-filter:blur(4px);color:#9a3412; }
-.badge-perdido    { background:rgba(254,226,226,0.75);backdrop-filter:blur(4px);color:#991b1b; }
-.badge-ganado     { background:rgba(167,243,208,0.75);backdrop-filter:blur(4px);color:#065f46; }
+.badge-perdida    { background:rgba(254,226,226,0.75);backdrop-filter:blur(4px);color:#991b1b; }
+.badge-ganada     { background:rgba(167,243,208,0.75);backdrop-filter:blur(4px);color:#065f46; }
+.badge-cancelada  { background:rgba(241,245,249,0.75);backdrop-filter:blur(4px);color:#475569; }
+.badge-nogo       { background:rgba(237,233,254,0.75);backdrop-filter:blur(4px);color:#5b21b6; }
 /* ── Perfil de Usuario ── */
 .badge-admin   { background:rgba(233,213,255,0.75);backdrop-filter:blur(4px);color:#6b21a8; }
 .badge-usuario { background:rgba(224,231,255,0.75);backdrop-filter:blur(4px);color:#3730a3; }
@@ -259,8 +261,10 @@ body.dark-mode .badge-desarrollo { background:rgba(113,63,18,0.5); color:#fde68a
 body.dark-mode .badge-entregada  { background:rgba(30,58,138,0.5); color:#93c5fd; }
 body.dark-mode .badge-finalizada { background:rgba(22,101,52,0.5); color:#86efac; }
 body.dark-mode .badge-pausa      { background:rgba(154,52,18,0.5); color:#fdba74; }
-body.dark-mode .badge-perdido    { background:rgba(127,29,29,0.5); color:#fca5a5; }
-body.dark-mode .badge-ganado     { background:rgba(6,95,70,0.5); color:#a7f3d0; }
+body.dark-mode .badge-perdida    { background:rgba(127,29,29,0.5); color:#fca5a5; }
+body.dark-mode .badge-ganada     { background:rgba(6,95,70,0.5); color:#a7f3d0; }
+body.dark-mode .badge-cancelada  { background:rgba(30,41,59,0.5); color:#94a3b8; }
+body.dark-mode .badge-nogo       { background:rgba(91,33,182,0.4); color:#c4b5fd; }
 body.dark-mode .badge-admin      { background:rgba(107,33,168,0.4); color:#e9d5ff; }
 body.dark-mode .badge-usuario    { background:rgba(55,48,163,0.4); color:#c7d2fe; }
 body.dark-mode .badge-activa     { background:rgba(22,101,52,0.5); color:#86efac; }
