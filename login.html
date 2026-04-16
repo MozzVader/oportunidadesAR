@@ -41,7 +41,11 @@
       --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
     }
 
-    html, body {
+    html {
+      min-height: 100vh;
+      background: transparent;
+    }
+    body {
       font-family: 'Montserrat', sans-serif;
       min-height: 100vh;
       display: flex;
@@ -49,12 +53,11 @@
       justify-content: center;
       padding: 24px;
       color: var(--text);
-    }
-    html {
+      margin: 0;
       background: linear-gradient(160deg, #c8c3db 0%, #d5d1e8 20%, #ddd8ec 40%, #d8d3ea 60%, #e2e0ec 80%, #d9d5e9 100%);
     }
 
-    html.dark-mode, body.dark-mode {
+    body.dark-mode {
       background: linear-gradient(160deg, #0e0e1a 0%, #141428 20%, #1a1a30 40%, #16162a 60%, #1a1a2e 80%, #18182c 100%);
     }
 
@@ -253,6 +256,11 @@
         if (key && key.startsWith('presales_ar_theme_')) {
           const theme = localStorage.getItem(key);
           localStorage.setItem('presales_ar_theme_default', theme);
+          // Aplicar inmediatamente a html y body para evitar flash de fondo claro
+          if (theme === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+            document.body.classList.add('dark-mode');
+          }
           break;
         }
       }
