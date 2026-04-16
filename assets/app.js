@@ -241,7 +241,7 @@ const TOAST = (() => {
 const PAGE_TITLES = {
   home: 'Inicio', nueva: 'Nueva Oportunidad', modificar: 'Modificar Oportunidad',
   mis: 'Mis Oportunidades', todas: 'Ver Todas', estadisticas: 'Estadísticas',
-  perfil: 'Mi Perfil', usuarios: 'Gestión de Usuarios'
+  perfil: 'Mi Perfil', usuarios: 'Administración'
 };
 
 function navigate(btn) {
@@ -983,6 +983,239 @@ function showModalAlert(msg) {
   box.textContent = msg;
   box.className = 'alert alert-error show';
   document.getElementById('um_btn').disabled = false;
+}
+
+// ══════════════════════════════════════════════
+// IMPORT EXCEL
+// ══════════════════════════════════════════════
+const IMPORT_FIELDS = [
+  'Cliente', 'Industria', 'Práctica/Área', 'Nombre de la Oportunidad',
+  'Descripción', 'Origen', 'Responsable', 'Estado',
+  'Fecha de Inicio', 'Fecha de Entrega', 'Notas',
+  'TCV', 'Currency', 'TCV EUR', 'Tipo de Cambio',
+  '% Probabilidad', '% PM'
+];
+
+const IMPORT_MAP = {
+  'Cliente': 'cliente', 'Industria': 'industria', 'Práctica/Área': 'practica',
+  'Nombre de la Oportunidad': 'nombre', 'Descripción': 'descripcion',
+  'Origen': 'origen', 'Responsable': 'responsable', 'Estado': 'estado',
+  'Fecha de Inicio': 'fechaInicio', 'Fecha de Entrega': 'fechaEntrega',
+  'Notas': 'notas', 'TCV': 'tcv', 'Currency': 'currency',
+  'TCV EUR': 'tcvEur', 'Tipo de Cambio': 'tipoCambio',
+  '% Probabilidad': 'probabilidad', '% PM': 'pm'
+};
+
+let _importData = [];
+
+function openImportModal() {
+  resetImportModal();
+  document.getElementById('importModalOverlay').classList.add('open');
+  // Setup drag & drop
+  const drop = document.getElementById('importDrop');
+  drop.ondragover = (e) => { e.preventDefault(); drop.classList.add('dragover'); };
+  drop.ondragleave = () => drop.classList.remove('dragover');
+  drop.ondrop = (e) => {
+    e.preventDefault();
+    drop.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) processImportFile(file);
+  };
+}
+
+function closeImportModal(event) {
+  if (event && event.target !== document.getElementById('importModalOverlay')) return;
+  document.getElementById('importModalOverlay').classList.remove('open');
+}
+
+function resetImportModal() {
+  _importData = [];
+  document.getElementById('importStep1').style.display = 'block';
+  document.getElementById('importStep2').style.display = 'none';
+  document.getElementById('importProgress').style.display = 'none';
+  document.getElementById('importResult').style.display = 'none';
+  document.getElementById('importFile').value = '';
+  document.getElementById('importBtn').disabled = false;
+  document.getElementById('importBtnText').textContent = 'Importar Oportunidades →';
+  document.getElementById('importBtnSpinner').style.display = 'none';
+}
+
+function downloadTemplate() {
+  if (typeof XLSX === 'undefined') { TOAST.error('Librería XLSX no disponible.'); return; }
+  const cols = IMPORT_FIELDS;
+  const ws = XLSX.utils.aoa_to_sheet([cols]);
+  // Set column widths
+  ws['!cols'] = [25, 18, 14, 30, 20, 14, 18, 14, 14, 14, 20, 12, 10, 12, 14, 14, 10].map(w => ({ wch: w }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Oportunidades');
+  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([wbout], { type: 'application/octet-stream' }));
+  a.download = 'plantilla_oportunidades.xlsx';
+  a.click();
+  TOAST.success('Plantilla descargada.');
+}
+
+function handleImportFile(input) {
+  const file = input.files[0];
+  if (file) processImportFile(file);
+}
+
+function processImportFile(file) {
+  const validExts = ['.xlsx', '.xls', '.csv'];
+  const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+  if (!validExts.includes(ext)) {
+    TOAST.error('Formato no válido. Usá .xlsx o .csv');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+      if (rows.length === 0) {
+        TOAST.warning('El archivo está vacío.');
+        return;
+      }
+
+      // Check that at least some expected columns exist
+      const headers = Object.keys(rows[0]);
+      const matched = headers.filter(h => IMPORT_MAP[h]);
+      if (matched.length < 3) {
+        TOAST.error('No se encontraron columnas reconocibles. Descargá la plantilla para ver el formato esperado.');
+        return;
+      }
+
+      _importData = rows;
+      renderImportPreview(file.name, headers, rows);
+    } catch(err) {
+      console.error('Error leyendo Excel:', err);
+      TOAST.error('Error al leer el archivo.');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function renderImportPreview(fileName, headers, rows) {
+  document.getElementById('importStep1').style.display = 'none';
+  document.getElementById('importStep2').style.display = 'block';
+  document.getElementById('importFileName').textContent = `📄 ${fileName} — ${rows.length} filas`;
+  document.getElementById('importRowCount').textContent = rows.length;
+
+  // Show header mapping info
+  const headRow = document.getElementById('importPreviewHead');
+  const matchedCols = headers.filter(h => IMPORT_MAP[h]);
+  headRow.innerHTML = '<tr>' + matchedCols.map(h =>
+    `<th>${h}${IMPORT_MAP[h] ? '' : ''}</th>`
+  ).join('') + '</tr>';
+
+  // Show first 10 rows
+  const previewRows = rows.slice(0, 10);
+  const body = document.getElementById('importPreviewBody');
+  body.innerHTML = previewRows.map((row, i) =>
+    '<tr>' + matchedCols.map(h => {
+      const val = row[h] !== undefined ? row[h] : '';
+      const isMissing = !val && h === 'Nombre de la Oportunidad';
+      return `<td style="${isMissing ? 'color:#f87171;font-weight:600' : ''}">${val || '—'}</td>`;
+    }).join('') + '</tr>'
+  ).join('');
+
+  if (rows.length > 10) {
+    body.innerHTML += `<tr><td colspan="${matchedCols.length}" style="text-align:center;color:var(--text-muted);font-style:italic;padding:10px">... y ${rows.length - 10} filas más</td></tr>`;
+  }
+}
+
+async function executeImport() {
+  if (_importData.length === 0) return;
+
+  const btn = document.getElementById('importBtn');
+  const progress = document.getElementById('importProgress');
+  const result = document.getElementById('importResult');
+
+  btn.disabled = true;
+  btn.querySelector('#importBtnText').style.display = 'none';
+  btn.querySelector('#importBtnSpinner').style.display = 'inline-block';
+  progress.style.display = 'block';
+  result.style.display = 'none';
+
+  const total = _importData.length;
+  let ok = 0, fail = 0, errors = [];
+  const session = AUTH.getSession();
+
+  for (let i = 0; i < total; i++) {
+    const row = _importData[i];
+    // Map row to data using column mapping
+    const data = {};
+    Object.keys(IMPORT_MAP).forEach(col => {
+      const field = IMPORT_MAP[col];
+      let val = row[col];
+      if (val !== undefined && val !== '') data[field] = val;
+    });
+
+    // Skip rows without a name
+    if (!data.nombre) {
+      fail++;
+      errors.push(`Fila ${i + 2}: falta "Nombre de la Oportunidad"`);
+      updateImportProgress(i + 1, total);
+      continue;
+    }
+
+    // Set responsible to current user if not specified
+    if (!data.responsable && session) data.responsable = session.nombre;
+
+    // Default state
+    if (!data.estado) data.estado = 'En Desarrollo';
+
+    // Validate estado
+    if (!CRM.ESTADOS.includes(data.estado)) {
+      fail++;
+      errors.push(`Fila ${i + 2}: estado "${data.estado}" no válido`);
+      updateImportProgress(i + 1, total);
+      continue;
+    }
+
+    try {
+      await CRM.addOportunidad(data);
+      ok++;
+    } catch(err) {
+      fail++;
+      errors.push(`Fila ${i + 2}: ${err.message}`);
+    }
+
+    updateImportProgress(i + 1, total);
+  }
+
+  // Done
+  btn.disabled = false;
+  btn.querySelector('#importBtnText').style.display = 'inline';
+  btn.querySelector('#importBtnSpinner').style.display = 'none';
+  document.getElementById('importProgressText').textContent = 'Importación finalizada';
+
+  // Show result
+  result.style.display = 'block';
+  if (fail === 0) {
+    result.style.background = 'color-mix(in srgb, #22c55e 10%, transparent)';
+    result.style.color = '#16a34a';
+    result.innerHTML = `<strong>${ok}</strong> oportunidades importadas correctamente.`;
+    TOAST.success(`${ok} oportunidades importadas.`);
+  } else {
+    result.style.background = 'color-mix(in srgb, #f59e0b 10%, transparent)';
+    result.style.color = '#d97706';
+    result.innerHTML = `<strong>${ok}</strong> importadas, <strong>${fail}</strong> con errores.<br><details style="margin-top:8px;font-size:11px;cursor:pointer"><summary>Ver errores</summary><div style="margin-top:6px;max-height:120px;overflow:auto">${errors.map(e => `<div>${e}</div>`).join('')}</div></details>`;
+    TOAST.warning(`${ok} importadas, ${fail} con errores.`);
+  }
+
+  CRM.invalidateCache();
+}
+
+function updateImportProgress(current, total) {
+  const pct = Math.round(current / total * 100);
+  document.getElementById('importProgressBar').style.width = pct + '%';
+  document.getElementById('importProgressCount').textContent = `${current}/${total}`;
+  document.getElementById('importProgressText').textContent = `Procesando fila ${current}...`;
 }
 
 // ══════════════════════════════════════════════

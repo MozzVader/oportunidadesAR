@@ -298,6 +298,12 @@ body.dark-mode tr:hover td { background:rgba(138,56,254,0.05); }
 .page-btn:disabled { opacity:0.3;cursor:not-allowed; }
 .page-ellipsis { padding:6px 8px;color:var(--text-muted);font-weight:600;user-select:none; }
 
+/* ── IMPORT DROP ZONE ── */
+.import-drop { border:2px dashed var(--border);border-radius:var(--radius);padding:48px 24px;text-align:center;cursor:pointer;transition:all 0.3s; }
+.import-drop:hover, .import-drop.dragover { border-color:var(--accent);background:color-mix(in srgb, var(--accent) 5%, transparent); }
+#importPreviewTable thead th { background:var(--bg);padding:8px 12px;text-align:left;font-weight:600;color:var(--text-muted);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:1; }
+#importPreviewTable tbody td { padding:6px 12px;border-bottom:1px solid var(--border);color:var(--text);max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+
 /* SKELETON LOADING */
 .skeleton { background:linear-gradient(90deg,var(--border) 25%,color-mix(in srgb,var(--surface) 80%,var(--border)) 50%,var(--border) 75%); background-size:200% 100%; animation:shimmer 1.5s ease-in-out infinite; border-radius:var(--radius-sm); }
 @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
