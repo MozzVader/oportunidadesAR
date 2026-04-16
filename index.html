@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>PRESALES AR</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-  <link href="assets/style.css?v=12" rel="stylesheet"/>
+  <link href="assets/style.css?v=13" rel="stylesheet"/>
   <!-- External Libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
@@ -114,7 +114,7 @@
           <h1 id="heroGreeting"></h1>
           <p class="subtitle">Aquí tenés un resumen de tu pipeline comercial.</p>
           <div class="hero-actions">
-            <button class="btn btn-accent" onclick="navigate(document.querySelector('[data-page=nueva]'))">+ Nueva Oportunidad</button>
+            <button class="btn btn-accent btn-new-opp" onclick="navigate(document.querySelector('[data-page=nueva]'))">+ Nueva Oportunidad</button>
             <button class="btn btn-primary" onclick="downloadExcelAction()">↓ Descargar Excel</button>
           </div>
         </div>
@@ -269,7 +269,7 @@
           <div><h1>Mis Oportunidades</h1><p class="subtitle" style="margin-bottom:0" id="misCount">Cargando...</p></div>
           <div style="display:flex;gap:10px">
             <button class="btn btn-ghost" onclick="misRefresh()">↺ Refrescar</button>
-            <button class="btn btn-primary" onclick="navigate(document.querySelector('[data-page=nueva]'))">+ Nueva</button>
+            <button class="btn btn-primary btn-new-opp" onclick="navigate(document.querySelector('[data-page=nueva]'))">+ Nueva</button>
           </div>
         </div>
         <div class="filters">
@@ -303,7 +303,7 @@
           <div><h1>Todas las Oportunidades</h1><p class="subtitle" style="margin-bottom:0" id="todasCount">Cargando...</p></div>
           <div style="display:flex;gap:10px">
             <button class="btn btn-ghost" onclick="downloadExcelAction()">↓ Exportar Excel</button>
-            <button class="btn btn-primary" onclick="navigate(document.querySelector('[data-page=nueva]'))">+ Nueva</button>
+            <button class="btn btn-primary btn-new-opp" onclick="navigate(document.querySelector('[data-page=nueva]'))">+ Nueva</button>
           </div>
         </div>
         <div class="filters">
@@ -350,7 +350,7 @@
           <div><h1>Kanban Board</h1><p class="subtitle" style="margin-bottom:0">Mové oportunidades arrastrando las cards entre columnas.</p></div>
           <div style="display:flex;gap:10px">
             <button class="btn btn-ghost" onclick="initKanban()">↺ Refrescar</button>
-            <button class="btn btn-primary" onclick="navigate(document.querySelector('[data-page=nueva]'))">+ Nueva</button>
+            <button class="btn btn-primary btn-new-opp" onclick="navigate(document.querySelector('[data-page=nueva]'))">+ Nueva</button>
           </div>
         </div>
         <div class="filters" id="kanbanFilters">
@@ -497,7 +497,7 @@
       <div class="form-grid">
         <div class="form-group full"><label>Nombre *</label><input type="text" id="um_nombre" required/></div>
         <div class="form-group full"><label>Email *</label><input type="email" id="um_email" required/></div>
-        <div class="form-group"><label>Perfil</label><select id="um_perfil"><option value="usuario">Usuario</option><option value="admin">Admin</option></select></div>
+        <div class="form-group"><label>Perfil</label><select id="um_perfil"><option value="usuario">Usuario</option><option value="solo lectura">Solo Lectura</option><option value="admin">Admin</option></select></div>
         <div class="form-group"><label>Activo</label><select id="um_activo"><option value="SI">Sí</option><option value="NO">No</option></select></div>
         <div class="form-group full" id="um_passGroup"><label>Contraseña *</label><input type="password" id="um_pass" placeholder="Mínimo 6 caracteres"/></div>
         <div class="form-group full" id="um_passResetGroup" style="display:none"><label>Nueva Contraseña (vacío = sin cambios)</label><input type="password" id="um_passReset" placeholder="Dejar vacío para mantener"/></div>
@@ -595,8 +595,8 @@
 <!-- Firebase Modules -->
 <script src="assets/firebase-config.js"></script>
 <script src="assets/firebase-auth.js"></script>
-<script src="assets/firebase-db.js?v=2"></script>
+<script src="assets/firebase-db.js?v=3"></script>
 <script src="assets/theme.js?v=2"></script>
-<script src="assets/app.js?v=7"></script>
+<script src="assets/app.js?v=8"></script>
 </body>
 </html>
