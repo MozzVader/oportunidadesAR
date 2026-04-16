@@ -43,17 +43,18 @@
 
     html, body {
       font-family: 'Montserrat', sans-serif;
-      background: linear-gradient(160deg, #c8c3db 0%, #d5d1e8 20%, #ddd8ec 40%, #d8d3ea 60%, #e2e0ec 80%, #d9d5e9 100%);
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: 24px;
       color: var(--text);
-      overflow: hidden;
+    }
+    html {
+      background: linear-gradient(160deg, #c8c3db 0%, #d5d1e8 20%, #ddd8ec 40%, #d8d3ea 60%, #e2e0ec 80%, #d9d5e9 100%);
     }
 
-    body.dark-mode {
+    html.dark-mode, body.dark-mode {
       background: linear-gradient(160deg, #0e0e1a 0%, #141428 20%, #1a1a30 40%, #16162a 60%, #1a1a2e 80%, #18182c 100%);
     }
 
@@ -86,7 +87,7 @@
 
     .login-wrap {
       width: 100%;
-      max-width: 400px;
+      max-width: 420px;
       position: relative;
       z-index: 1;
     }
@@ -116,7 +117,7 @@
       background: var(--glass-bg);
       backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
       border-radius: 16px;
-      padding: 32px;
+      padding: 36px;
       border: 1px solid var(--glass-border);
       box-shadow: var(--glass-shadow);
     }
@@ -228,11 +229,26 @@
         <button type="submit" class="btn-login" id="btnLogin">Ingresar →</button>
       </form>
     </div>
-    <div class="footer-text">PRESALES AR v2.0 · Atos</div>
+    <div class="footer-text">PRESALES AR v2.0</div>
   </div>
   <script>
     // Si ya hay sesión activa, redirigir al index
     if (AUTH.getSession()) window.location.href = 'index.html';
+
+    // Restaurar modo oscuro si el usuario lo tenia seteado
+    (function() {
+      // theme.js usa sessionStorage + usuario, pero aca no hay sesión.
+      // Buscamos cualquier clave de tema guardada para restaurar el modo
+      const restored = false;
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('presales_ar_theme_')) {
+          const theme = localStorage.getItem(key);
+          if (theme === 'dark') { document.body.classList.add('dark-mode'); document.documentElement.classList.add('dark-mode'); }
+          break;
+        }
+      }
+    })();
 
     async function handleLogin(e) {
       e.preventDefault();
