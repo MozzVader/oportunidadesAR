@@ -1183,7 +1183,7 @@ function processImportFile(file) {
   const reader = new FileReader();
   reader.onload = (e) => {
     try {
-      const wb = XLSX.read(e.target.result, { type: 'array' });
+      const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
       const ws = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
 
@@ -1225,10 +1225,15 @@ function renderImportPreview(fileName, headers, rows) {
 
   // Show first 10 rows
   const previewRows = rows.slice(0, 10);
+  const DATE_COLS = ['Fecha de Inicio', 'Fecha de Entrega'];
   const body = document.getElementById('importPreviewBody');
   body.innerHTML = previewRows.map((row, i) =>
     '<tr>' + matchedCols.map(h => {
-      const val = row[h] !== undefined ? row[h] : '';
+      let val = row[h] !== undefined ? row[h] : '';
+      // Format Date objects for preview
+      if (val instanceof Date && !isNaN(val.getTime())) {
+        val = val.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      }
       const isMissing = !val && h === 'Nombre de la Oportunidad';
       return `<td style="${isMissing ? 'color:#f87171;font-weight:600' : ''}">${val || '—'}</td>`;
     }).join('') + '</tr>'
