@@ -1313,12 +1313,13 @@ function renderKanban() {
 }
 
 function renderKanbanCard(r) {
+  const color = CRM.ESTADO_COLORS[r.estado] || 'var(--border)';
   const tcvDisplay = r.tcv ? Number(r.tcv).toLocaleString('es-AR') + (r.currency ? ' ' + r.currency : '') : '—';
   return `
-    <div class="kanban-card" draggable="true" data-id="${r.id}" data-estado="${r.estado}">
+    <div class="kanban-card" draggable="true" data-id="${r.id}" data-estado="${r.estado}" style="border-left-color:${color}">
       <div class="kanban-card-id">${friendlyId(r)}</div>
-      <div class="kanban-card-name">${r.nombre || '—'}</div>
       <div class="kanban-card-client">${r.cliente || '—'}</div>
+      <div class="kanban-card-name">${r.nombre || '—'}</div>
       <div class="kanban-card-meta">
         <span>${r.responsable || '—'}</span>
         <span class="kanban-card-tcv">${tcvDisplay}</span>
