@@ -1,0 +1,8 @@
+# Entorno local
+.env
+worklog.md
+download/
+upload/
+skills/
+*.pyc
+__pycache__/
