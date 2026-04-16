@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>PRESALES AR</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-  <link href="assets/style.css?v=11" rel="stylesheet"/>
+  <link href="assets/style.css?v=12" rel="stylesheet"/>
   <!-- External Libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
@@ -319,6 +319,7 @@
             <div class="table-wrap">
               <table>
                 <thead><tr>
+                  <th style="width:40px;text-align:center" id="thSelectAll"><input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this.checked)" style="cursor:pointer;accent-color:var(--accent)"/></th>
                   <th class="sort-th" onclick="sortTabla('id')">ID</th>
                   <th class="sort-th" onclick="sortTabla('cliente')">Cliente</th>
                   <th class="sort-th" onclick="sortTabla('nombre')">Nombre de la Oportunidad</th>
@@ -331,6 +332,14 @@
             </div>
             <div id="todasEmpty" class="empty" style="display:none"><div class="empty-icon">📋</div><div class="empty-text">Sin oportunidades</div></div>
             <div id="todasPagination" class="pagination" style="display:none"></div>
+          </div>
+        </div>
+        <!-- Bulk Action Bar -->
+        <div id="bulkBar" class="bulk-bar" style="display:none">
+          <div class="bulk-bar-info"><span id="bulkCount">0</span> oportunidad<span id="bulkPlural">es</span> seleccionada<span id="bulkPlural2">s</span></div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-danger btn-sm" onclick="openBulkDeleteModal()">🗑 Eliminar</button>
+            <button class="btn btn-ghost btn-sm" onclick="clearBulkSelection()">Cancelar</button>
           </div>
         </div>
       </div>
@@ -564,14 +573,30 @@
   </div>
 </div>
 
+<!-- BULK DELETE CONFIRM MODAL -->
+<div class="modal-overlay" id="bulkDeleteModal" onclick="closeBulkDeleteModal(event)">
+  <div class="modal-box" style="max-width:420px" onclick="event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h3 style="font-size:16px;font-weight:700">Confirmar Eliminación</h3>
+      <button onclick="closeBulkDeleteModal()" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:20px;padding:4px;line-height:1">✕</button>
+    </div>
+    <p style="font-size:14px;color:var(--text);margin-bottom:8px">Estás a punto de eliminar <strong id="bulkDeleteCount">0</strong> oportunidad<span id="bulkDeletePlural">es</span>. Esta acción <strong>no se puede deshacer</strong>.</p>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:24px">Los datos serán eliminados permanentemente de la base de datos.</p>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeBulkDeleteModal()">Cancelar</button>
+      <button class="btn btn-danger" id="bulkDeleteConfirmBtn" onclick="executeBulkDelete()">Eliminar</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOASTS -->
 <div id="toastContainer" class="toast-container"></div>
 
 <!-- Firebase Modules -->
 <script src="assets/firebase-config.js"></script>
 <script src="assets/firebase-auth.js"></script>
-<script src="assets/firebase-db.js"></script>
+<script src="assets/firebase-db.js?v=2"></script>
 <script src="assets/theme.js?v=2"></script>
-<script src="assets/app.js?v=4"></script>
+<script src="assets/app.js?v=5"></script>
 </body>
 </html>
