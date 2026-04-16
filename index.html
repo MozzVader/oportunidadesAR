@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>PRESALES AR</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-  <link href="assets/style.css?v=13" rel="stylesheet"/>
+  <link href="assets/style.css?v=6" rel="stylesheet"/>
   <!-- External Libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
@@ -114,7 +114,7 @@
           <h1 id="heroGreeting"></h1>
           <p class="subtitle">Aquí tenés un resumen de tu pipeline comercial.</p>
           <div class="hero-actions">
-            <button class="btn btn-accent btn-new-opp" onclick="navigate(document.querySelector('[data-page=nueva]'))">+ Nueva Oportunidad</button>
+            <button class="btn btn-accent" onclick="navigate(document.querySelector('[data-page=nueva]'))">+ Nueva Oportunidad</button>
             <button class="btn btn-primary" onclick="downloadExcelAction()">↓ Descargar Excel</button>
           </div>
         </div>
@@ -156,7 +156,7 @@
               <div class="section-title">BID</div>
               <div class="two-col-form" style="margin-bottom:18px">
                 <div class="form-group"><label>Responsable *</label><input type="text" id="n_responsable" required/></div>
-                <div class="form-group"><label>Estado *</label><select id="n_estado" required><option value="">— Seleccionar —</option><option>En Desarrollo</option><option>Entregada</option><option>Finalizada</option><option>Pausa</option><option>Perdida</option><option>Ganada</option><option>Cancelada</option><option>No Go</option></select></div>
+                <div class="form-group"><label>Estado *</label><select id="n_estado" required><option value="">— Seleccionar —</option><option>En Desarrollo</option><option>Entregada</option><option>Finalizada</option><option>Pausa</option><option>Perdido</option><option>Ganado</option></select></div>
               </div>
               <div class="two-col-form" style="margin-bottom:18px">
                 <div class="form-group"><label>Fecha de Inicio *</label><input type="date" id="n_fechaInicio" required/></div>
@@ -226,7 +226,7 @@
                 <div class="section-title">BID</div>
                 <div class="two-col-form" style="margin-bottom:18px">
                   <div class="form-group"><label>Responsable *</label><input type="text" id="e_responsable" required/></div>
-                  <div class="form-group"><label>Estado *</label><select id="e_estado" required><option value="">— Seleccionar —</option><option>En Desarrollo</option><option>Entregada</option><option>Finalizada</option><option>Pausa</option><option>Perdida</option><option>Ganada</option><option>Cancelada</option><option>No Go</option></select></div>
+                  <div class="form-group"><label>Estado *</label><select id="e_estado" required><option value="">— Seleccionar —</option><option>En Desarrollo</option><option>Entregada</option><option>Finalizada</option><option>Pausa</option><option>Perdido</option><option>Ganado</option></select></div>
                 </div>
                 <div class="two-col-form" style="margin-bottom:18px">
                   <div class="form-group"><label>Fecha de Inicio *</label><input type="date" id="e_fechaInicio" required/></div>
@@ -269,12 +269,12 @@
           <div><h1>Mis Oportunidades</h1><p class="subtitle" style="margin-bottom:0" id="misCount">Cargando...</p></div>
           <div style="display:flex;gap:10px">
             <button class="btn btn-ghost" onclick="misRefresh()">↺ Refrescar</button>
-            <button class="btn btn-primary btn-new-opp" onclick="navigate(document.querySelector('[data-page=nueva]'))">+ Nueva</button>
+            <button class="btn btn-primary" onclick="navigate(document.querySelector('[data-page=nueva]'))">+ Nueva</button>
           </div>
         </div>
         <div class="filters">
           <input type="text" id="mis_search" placeholder="Buscar..." oninput="renderMis(1)"/>
-          <select id="mis_estado" onchange="renderMis(1)"><option value="">Todos los estados</option><option>En Desarrollo</option><option>Entregada</option><option>Finalizada</option><option>Pausa</option><option>Perdida</option><option>Ganada</option><option>Cancelada</option><option>No Go</option></select>
+          <select id="mis_estado" onchange="renderMis(1)"><option value="">Todos los estados</option><option>En Desarrollo</option><option>Entregada</option><option>Finalizada</option><option>Pausa</option><option>Perdido</option><option>Ganado</option></select>
         </div>
         <div class="card" style="padding:0">
           <div id="misLoading" class="loading" style="padding:40px 28px"><div class="spinner"></div> Cargando datos...</div>
@@ -303,13 +303,13 @@
           <div><h1>Todas las Oportunidades</h1><p class="subtitle" style="margin-bottom:0" id="todasCount">Cargando...</p></div>
           <div style="display:flex;gap:10px">
             <button class="btn btn-ghost" onclick="downloadExcelAction()">↓ Exportar Excel</button>
-            <button class="btn btn-primary btn-new-opp" onclick="navigate(document.querySelector('[data-page=nueva]'))">+ Nueva</button>
+            <button class="btn btn-primary" onclick="navigate(document.querySelector('[data-page=nueva]'))">+ Nueva</button>
           </div>
         </div>
         <div class="filters">
           <input type="text" id="t_search" placeholder="Buscar..." oninput="renderTabla(1)"/>
           <select id="t_cliente" onchange="renderTabla(1)"><option value="">Todos los clientes</option></select>
-          <select id="t_estado" onchange="renderTabla(1)"><option value="">Todos los estados</option><option>En Desarrollo</option><option>Entregada</option><option>Finalizada</option><option>Pausa</option><option>Perdida</option><option>Ganada</option><option>Cancelada</option><option>No Go</option></select>
+          <select id="t_estado" onchange="renderTabla(1)"><option value="">Todos los estados</option><option>En Desarrollo</option><option>Entregada</option><option>Finalizada</option><option>Pausa</option><option>Perdido</option><option>Ganado</option></select>
           <select id="t_practica" onchange="renderTabla(1)"><option value="">Todas las prácticas</option><option>AM</option><option>CES</option><option>Consultoría</option><option>DWP</option><option>Enablon</option><option>HCI</option><option>IA</option><option>SAP</option><option>Testing</option></select>
           <select id="t_responsable" onchange="renderTabla(1)"><option value="">Todos los responsables</option></select>
         </div>
@@ -319,7 +319,6 @@
             <div class="table-wrap">
               <table>
                 <thead><tr>
-                  <th style="width:40px;text-align:center" id="thSelectAll"><input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this.checked)" style="cursor:pointer;accent-color:var(--accent)"/></th>
                   <th class="sort-th" onclick="sortTabla('id')">ID</th>
                   <th class="sort-th" onclick="sortTabla('cliente')">Cliente</th>
                   <th class="sort-th" onclick="sortTabla('nombre')">Nombre de la Oportunidad</th>
@@ -334,14 +333,6 @@
             <div id="todasPagination" class="pagination" style="display:none"></div>
           </div>
         </div>
-        <!-- Bulk Action Bar -->
-        <div id="bulkBar" class="bulk-bar" style="display:none">
-          <div class="bulk-bar-info"><span id="bulkCount">0</span> oportunidad<span id="bulkPlural">es</span> seleccionada<span id="bulkPlural2">s</span></div>
-          <div style="display:flex;gap:8px">
-            <button class="btn btn-danger btn-sm" onclick="openBulkDeleteModal()">🗑 Eliminar</button>
-            <button class="btn btn-ghost btn-sm" onclick="clearBulkSelection()">Cancelar</button>
-          </div>
-        </div>
       </div>
 
       <!-- ══ KANBAN ══ -->
@@ -350,7 +341,7 @@
           <div><h1>Kanban Board</h1><p class="subtitle" style="margin-bottom:0">Mové oportunidades arrastrando las cards entre columnas.</p></div>
           <div style="display:flex;gap:10px">
             <button class="btn btn-ghost" onclick="initKanban()">↺ Refrescar</button>
-            <button class="btn btn-primary btn-new-opp" onclick="navigate(document.querySelector('[data-page=nueva]'))">+ Nueva</button>
+            <button class="btn btn-primary" onclick="navigate(document.querySelector('[data-page=nueva]'))">+ Nueva</button>
           </div>
         </div>
         <div class="filters" id="kanbanFilters">
@@ -497,7 +488,7 @@
       <div class="form-grid">
         <div class="form-group full"><label>Nombre *</label><input type="text" id="um_nombre" required/></div>
         <div class="form-group full"><label>Email *</label><input type="email" id="um_email" required/></div>
-        <div class="form-group"><label>Perfil</label><select id="um_perfil"><option value="usuario">Usuario</option><option value="solo lectura">Solo Lectura</option><option value="admin">Admin</option></select></div>
+        <div class="form-group"><label>Perfil</label><select id="um_perfil"><option value="usuario">Usuario</option><option value="admin">Admin</option></select></div>
         <div class="form-group"><label>Activo</label><select id="um_activo"><option value="SI">Sí</option><option value="NO">No</option></select></div>
         <div class="form-group full" id="um_passGroup"><label>Contraseña *</label><input type="password" id="um_pass" placeholder="Mínimo 6 caracteres"/></div>
         <div class="form-group full" id="um_passResetGroup" style="display:none"><label>Nueva Contraseña (vacío = sin cambios)</label><input type="password" id="um_passReset" placeholder="Dejar vacío para mantener"/></div>
@@ -573,30 +564,14 @@
   </div>
 </div>
 
-<!-- BULK DELETE CONFIRM MODAL -->
-<div class="modal-overlay" id="bulkDeleteModal" onclick="closeBulkDeleteModal(event)">
-  <div class="modal-box" style="max-width:420px" onclick="event.stopPropagation()">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-      <h3 style="font-size:16px;font-weight:700">Confirmar Eliminación</h3>
-      <button onclick="closeBulkDeleteModal()" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:20px;padding:4px;line-height:1">✕</button>
-    </div>
-    <p style="font-size:14px;color:var(--text);margin-bottom:8px">Estás a punto de eliminar <strong id="bulkDeleteCount">0</strong> oportunidad<span id="bulkDeletePlural">es</span>. Esta acción <strong>no se puede deshacer</strong>.</p>
-    <p style="font-size:13px;color:var(--text-muted);margin-bottom:24px">Los datos serán eliminados permanentemente de la base de datos.</p>
-    <div style="display:flex;gap:10px;justify-content:flex-end">
-      <button class="btn btn-ghost" onclick="closeBulkDeleteModal()">Cancelar</button>
-      <button class="btn btn-danger" id="bulkDeleteConfirmBtn" onclick="executeBulkDelete()">Eliminar</button>
-    </div>
-  </div>
-</div>
-
 <!-- TOASTS -->
 <div id="toastContainer" class="toast-container"></div>
 
 <!-- Firebase Modules -->
 <script src="assets/firebase-config.js"></script>
 <script src="assets/firebase-auth.js"></script>
-<script src="assets/firebase-db.js?v=3"></script>
+<script src="assets/firebase-db.js"></script>
 <script src="assets/theme.js?v=2"></script>
-<script src="assets/app.js?v=8"></script>
+<script src="assets/app.js?v=4"></script>
 </body>
 </html>

@@ -133,22 +133,12 @@ function friendlyId(r) {
 
 function canEdit(r) {
   const s = AUTH.getSession();
-  if (!s || s.perfil === 'solo lectura') return false;
+  if (!s) return false;
   return s.perfil === 'admin' || r.responsableUid === s.uid;
 }
 
-function canDelete() {
-  const s = AUTH.getSession();
-  return s && s.perfil === 'admin';
-}
-
-function isReadOnly() {
-  const s = AUTH.getSession();
-  return s && s.perfil === 'solo lectura';
-}
-
 function badgeEstado(e) {
-  return { 'En Desarrollo': 'badge-desarrollo', 'Entregada': 'badge-entregada', 'Finalizada': 'badge-finalizada', 'Pausa': 'badge-pausa', 'Perdida': 'badge-perdida', 'Ganada': 'badge-ganada', 'Cancelada': 'badge-cancelada', 'No Go': 'badge-nogo' }[e] || '';
+  return { 'En Desarrollo': 'badge-desarrollo', 'Entregada': 'badge-entregada', 'Finalizada': 'badge-finalizada', 'Pausa': 'badge-pausa', 'Perdido': 'badge-perdido', 'Ganado': 'badge-ganado' }[e] || '';
 }
 
 function showAlert(id, msg, type) {
@@ -255,13 +245,9 @@ const PAGE_TITLES = {
 };
 
 function navigate(btn) {
-  const page = btn.dataset.page;
-  if (isReadOnly() && ['nueva', 'modificar', 'mis'].includes(page)) {
-    TOAST.warning('Tu perfil es de solo lectura.');
-    return;
-  }
   document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
   btn.classList.add('active');
+  const page = btn.dataset.page;
   document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
   document.getElementById('page-' + page).classList.add('active');
   document.getElementById('pageTitle').textContent = PAGE_TITLES[page] || page;
@@ -400,7 +386,6 @@ function calcFX(prefix) {
 // ══════════════════════════════════════════════
 async function handleNueva(e) {
   e.preventDefault();
-  if (isReadOnly()) { TOAST.error('No tenés permisos para crear oportunidades.'); return; }
   const btn = document.getElementById('n_submitBtn');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner-inline"></span>Guardando...';
@@ -536,15 +521,6 @@ function backToModSearch() {
 async function handleUpdate(e) {
   e.preventDefault();
   const id  = document.getElementById('e_id').value;
-  if (isReadOnly()) { TOAST.error('No tenés permisos para modificar.'); return; }
-  const session = AUTH.getSession();
-  if (session && session.perfil !== 'admin') {
-    const r = _modRows.find(x => x.id === id);
-    if (r && r.responsableUid !== session.uid) {
-      TOAST.error('Solo podés editar oportunidades que te pertenecen.');
-      return;
-    }
-  }
   const btn = document.getElementById('e_submitBtn');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner-inline"></span>Guardando...';
@@ -582,7 +558,6 @@ async function handleUpdate(e) {
 }
 
 async function handleDelete() {
-  if (!canDelete()) { TOAST.error('No tenés permisos para eliminar.'); return; }
   const id   = document.getElementById('e_id').value;
   const name = document.getElementById('modEditTitle').textContent;
   if (!confirm(`¿Seguro que querés eliminar "${name}"?`)) return;
@@ -602,7 +577,6 @@ async function handleDelete() {
 // TODAS LAS OPORTUNIDADES
 // ══════════════════════════════════════════════
 let _tablaRows = [], _sortKey = 'fechaCreacion', _sortDir = -1, _tablaPage = 1;
-let _bulkSelected = new Set(); // IDs seleccionados para eliminación masiva
 
 async function initTabla() {
   document.getElementById('todasLoading').style.display = 'flex';
@@ -624,9 +598,6 @@ async function initTabla() {
   clientes.forEach(cl => selC.innerHTML += `<option>${cl}</option>`);
 
   _tablaPage = 1;
-  _bulkSelected.clear();
-  const isAdmin = AUTH.getSession()?.perfil === 'admin';
-  document.getElementById('thSelectAll').style.display = isAdmin ? '' : 'none';
   renderTabla();
 }
 
@@ -668,10 +639,8 @@ function renderTabla(page) {
   empty.style.display = 'none';
 
   const pg = paginate(rows, _tablaPage);
-  const isAdmin = AUTH.getSession()?.perfil === 'admin';
   body.innerHTML = pg.rows.map(r => `
-    <tr${_bulkSelected.has(r.id) ? ' style="background:color-mix(in srgb, var(--accent) 8%, transparent)"' : ''}>
-      ${isAdmin ? `<td style="text-align:center"><input type="checkbox" ${_bulkSelected.has(r.id) ? 'checked' : ''} onchange="toggleBulkSelect('${r.id}', this.checked)" style="cursor:pointer;accent-color:var(--accent)"/></td>` : ''}
+    <tr>
       <td class="col-id">${friendlyId(r)}</td>
       <td style="font-weight:600">${r.cliente || '—'}</td>
       <td style="max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.nombre || '—'}</td>
@@ -683,112 +652,7 @@ function renderTabla(page) {
       </td>
     </tr>`).join('');
 
-  updateBulkUI();
   renderPagination('todasPagination', pg, (p) => renderTabla(p));
-}
-
-// ── BULK DELETE ──
-function toggleBulkSelect(id, checked) {
-  if (checked) _bulkSelected.add(id); else _bulkSelected.delete(id);
-  renderTabla();
-}
-
-function toggleSelectAll(checked) {
-  const filteredIds = getFilteredTablaRows().map(r => r.id);
-  if (checked) filteredIds.forEach(id => _bulkSelected.add(id));
-  else filteredIds.forEach(id => _bulkSelected.delete(id));
-  renderTabla();
-}
-
-function getFilteredTablaRows() {
-  const q    = document.getElementById('t_search').value.trim().toLowerCase();
-  const est  = document.getElementById('t_estado').value;
-  const prac = document.getElementById('t_practica').value;
-  const resp = document.getElementById('t_responsable').value;
-  const cli  = document.getElementById('t_cliente').value;
-  return _tablaRows.filter(r => {
-    if (cli  && r.cliente  !== cli)  return false;
-    if (est  && r.estado   !== est)  return false;
-    if (prac && r.practica !== prac) return false;
-    if (resp && r.responsable !== resp) return false;
-    if (q) {
-      const h = [r.codigo, r.cliente, r.nombre, r.responsable].join(' ').toLowerCase();
-      if (!h.includes(q)) return false;
-    }
-    return true;
-  });
-}
-
-function updateBulkUI() {
-  const bar = document.getElementById('bulkBar');
-  const count = _bulkSelected.size;
-  if (count > 0) {
-    bar.style.display = 'flex';
-    document.getElementById('bulkCount').textContent = count;
-    document.getElementById('bulkPlural').textContent = count === 1 ? '' : 'es';
-    document.getElementById('bulkPlural2').textContent = count === 1 ? '' : 's';
-  } else {
-    bar.style.display = 'none';
-  }
-  // Sync "select all" checkbox
-  const filteredIds = getFilteredTablaRows().map(r => r.id);
-  const allBox = document.getElementById('selectAllCheckbox');
-  if (allBox) {
-    if (filteredIds.length > 0 && filteredIds.every(id => _bulkSelected.has(id))) allBox.checked = true;
-    else allBox.checked = false;
-  }
-}
-
-function clearBulkSelection() {
-  _bulkSelected.clear();
-  document.getElementById('selectAllCheckbox').checked = false;
-  renderTabla();
-}
-
-function openBulkDeleteModal() {
-  if (_bulkSelected.size === 0) return;
-  document.getElementById('bulkDeleteCount').textContent = _bulkSelected.size;
-  document.getElementById('bulkDeletePlural').textContent = _bulkSelected.size === 1 ? '' : 'es';
-  document.getElementById('bulkDeleteConfirmBtn').disabled = false;
-  document.getElementById('bulkDeleteConfirmBtn').textContent = 'Eliminar';
-  document.getElementById('bulkDeleteModal').classList.add('open');
-}
-
-function closeBulkDeleteModal(event) {
-  if (event && event.target !== document.getElementById('bulkDeleteModal')) return;
-  document.getElementById('bulkDeleteModal').classList.remove('open');
-}
-
-async function executeBulkDelete() {
-  if (!canDelete()) { TOAST.error('No tenés permisos para eliminar.'); return; }
-  const btn = document.getElementById('bulkDeleteConfirmBtn');
-  btn.disabled = true;
-  btn.textContent = 'Eliminando...';
-
-  const ids = [..._bulkSelected];
-  let ok = 0, fail = 0;
-  for (const id of ids) {
-    try {
-      await CRM.deleteOportunidad(id);
-      ok++;
-    } catch (e) {
-      console.error('Error eliminando', id, e);
-      fail++;
-    }
-  }
-
-  closeBulkDeleteModal();
-  _bulkSelected.clear();
-
-  if (fail === 0) {
-    TOAST.success(`${ok} oportunidad${ok !== 1 ? 'es' : ''} eliminada${ok !== 1 ? 's' : ''} correctamente`);
-  } else {
-    TOAST.warning(`${ok} eliminada${ok !== 1 ? 's' : ''}, ${fail} con error`);
-  }
-
-  // Reload data
-  await initTabla();
-  CRM.invalidateCache();
 }
 
 function editFromTabla(id) {
@@ -803,7 +667,6 @@ function verOportunidad(id) {
   document.getElementById('verModalId').textContent = friendlyId(r);
   document.getElementById('verModalTitle').textContent = r.nombre || '—';
   document.getElementById('verModalEditBtn').setAttribute('onclick', `closeVerModal(); editFromTabla('${id}')`);
-  document.getElementById('verModalEditBtn').style.display = canEdit(r) ? '' : 'none';
 
   const fmtVal = v => v || '—';
   const fmtEURv = v => v ? '€ ' + parseFloat(v).toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '—';
@@ -963,14 +826,13 @@ async function renderStats() {
 function renderPerfil() {
   const s = AUTH.getSession();
   if (!s) return;
-  const perfBadge = s.perfil === 'admin' ? 'badge-admin' : s.perfil === 'solo lectura' ? 'badge-readonly' : 'badge-usuario';
-  const perfLabel = s.perfil === 'solo lectura' ? 'Solo Lectura' : s.perfil;
+  const perfBadge = s.perfil === 'admin' ? 'badge-admin' : 'badge-usuario';
   document.getElementById('perfilInfo').innerHTML =
     `<div style="display:flex;align-items:center;gap:16px;margin-bottom:24px">
       <div style="width:56px;height:56px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;flex-shrink:0">${s.nombre.split(' ').map(n => n[0]).slice(0, 2).join('')}</div>
       <div><div style="font-size:16px;font-weight:700">${s.nombre}</div><div style="font-size:12px;color:var(--text-muted);margin-top:2px">${s.email}</div></div>
     </div>
-    ${infoRow('Perfil', `<span class="badge ${perfBadge}">${perfLabel}</span>`)}
+    ${infoRow('Perfil', `<span class="badge ${perfBadge}">${s.perfil}</span>`)}
     ${infoRow('Estado', '<span class="badge badge-activa">Activo</span>')}`;
   updateThemeUI();
 }
@@ -1031,7 +893,7 @@ async function loadUsuarios() {
     <tr>
       <td style="font-weight:600">${u.nombre}</td>
       <td style="color:var(--text-muted);font-size:12px">${u.email}</td>
-      <td><span class="badge ${u.perfil === 'admin' ? 'badge-admin' : u.perfil === 'solo lectura' ? 'badge-readonly' : 'badge-usuario'}">${u.perfil === 'solo lectura' ? 'Solo Lectura' : u.perfil}</span></td>
+      <td><span class="badge ${u.perfil === 'admin' ? 'badge-admin' : 'badge-usuario'}">${u.perfil}</span></td>
       <td><span class="badge ${u.activo ? 'badge-activa' : 'badge-cerrada'}">${u.activo ? 'Activo' : 'Inactivo'}</span></td>
       <td style="text-align:center"><button class="btn-sm" onclick="openUserModal('edit','${u.uid}')">Editar</button></td>
     </tr>`).join('');
@@ -1211,7 +1073,7 @@ function processImportFile(file) {
   const reader = new FileReader();
   reader.onload = (e) => {
     try {
-      const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
+      const wb = XLSX.read(e.target.result, { type: 'array' });
       const ws = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
 
@@ -1253,15 +1115,10 @@ function renderImportPreview(fileName, headers, rows) {
 
   // Show first 10 rows
   const previewRows = rows.slice(0, 10);
-  const DATE_COLS = ['Fecha de Inicio', 'Fecha de Entrega'];
   const body = document.getElementById('importPreviewBody');
   body.innerHTML = previewRows.map((row, i) =>
     '<tr>' + matchedCols.map(h => {
-      let val = row[h] !== undefined ? row[h] : '';
-      // Format Date objects for preview
-      if (val instanceof Date && !isNaN(val.getTime())) {
-        val = val.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-      }
+      const val = row[h] !== undefined ? row[h] : '';
       const isMissing = !val && h === 'Nombre de la Oportunidad';
       return `<td style="${isMissing ? 'color:#f87171;font-weight:600' : ''}">${val || '—'}</td>`;
     }).join('') + '</tr>'
@@ -1298,10 +1155,6 @@ async function executeImport() {
       let val = row[col];
       if (val !== undefined && val !== '') data[field] = val;
     });
-
-    // Convert dates from Excel format to YYYY-MM-DD strings
-    if (data.fechaInicio) data.fechaInicio = toInputDate(data.fechaInicio);
-    if (data.fechaEntrega) data.fechaEntrega = toInputDate(data.fechaEntrega);
 
     // Skip rows without a name
     if (!data.nombre) {
@@ -1380,16 +1233,20 @@ async function initKanban() {
 
   const session = AUTH.getSession();
   const raw = await CRM.getData();
-  // Todos los roles ven todas las cards del Kanban
-  _kanbanRows = raw;
+  _kanbanRows = session.perfil === 'admin' ? raw : raw.filter(r => r.responsableUid === session.uid);
 
-  // Populate responsables filter (available for all roles)
+  // Populate responsables filter (admin only)
   const selR = document.getElementById('k_responsable');
   const filters = document.getElementById('kanbanFilters');
-  filters.style.display = 'flex';
-  const resps = [...new Set(_kanbanRows.map(r => r.responsable).filter(Boolean))].sort();
-  selR.innerHTML = '<option value="">Todos los responsables</option>';
-  resps.forEach(r => selR.innerHTML += `<option>${r}</option>`);
+  if (session.perfil === 'admin') {
+    filters.style.display = 'flex';
+    const resps = [...new Set(_kanbanRows.map(r => r.responsable).filter(Boolean))].sort();
+    selR.innerHTML = '<option value="">Todos los responsables</option>';
+    resps.forEach(r => selR.innerHTML += `<option>${r}</option>`);
+  } else {
+    filters.style.display = 'flex';
+    selR.style.display = 'none';
+  }
 
   loading.style.display = 'none';
   board.style.display = 'flex';
@@ -1400,7 +1257,6 @@ function renderKanban() {
   const q = document.getElementById('k_search').value.trim().toLowerCase();
   const resp = document.getElementById('k_responsable').value;
   const session = AUTH.getSession();
-  const KANBAN_COLS = ['En Desarrollo', 'Entregada', 'Finalizada', 'Pausa', 'Perdida', 'Ganada'];
 
   let rows = _kanbanRows;
   if (resp) rows = rows.filter(r => r.responsable === resp);
@@ -1410,7 +1266,7 @@ function renderKanban() {
   });
 
   const board = document.getElementById('kanbanBoard');
-  board.innerHTML = KANBAN_COLS.map(estado => {
+  board.innerHTML = CRM.ESTADOS.map(estado => {
     const color = CRM.ESTADO_COLORS[estado];
     const cards = rows.filter(r => r.estado === estado);
     return `
@@ -1456,21 +1312,11 @@ function renderKanban() {
   });
 }
 
-function canMoveCard(r) {
-  const s = AUTH.getSession();
-  if (!s) return false;
-  if (s.perfil === 'admin') return true;
-  if (s.perfil === 'solo lectura') return false;
-  // usuario: solo puede mover sus propias cards
-  return r.responsableUid === s.uid;
-}
-
 function renderKanbanCard(r) {
   const color = CRM.ESTADO_COLORS[r.estado] || 'var(--border)';
   const tcvDisplay = r.tcv ? Number(r.tcv).toLocaleString('es-AR') + (r.currency ? ' ' + r.currency : '') : '—';
-  const movable = canMoveCard(r);
   return `
-    <div class="kanban-card${movable ? '' : ' kanban-card-locked'}"${movable ? ' draggable="true"' : ''} data-id="${r.id}" data-estado="${r.estado}" style="border-left-color:${color}">
+    <div class="kanban-card" draggable="true" data-id="${r.id}" data-estado="${r.estado}" style="border-left-color:${color}">
       <div class="kanban-card-id">${friendlyId(r)}</div>
       <div class="kanban-card-client">${r.cliente || '—'}</div>
       <div class="kanban-card-name">${r.nombre || '—'}</div>
@@ -1512,15 +1358,15 @@ document.addEventListener('click', (e) => {
 });
 
 async function handleKanbanDrop(id, newEstado) {
-  if (isReadOnly()) { TOAST.error('No tenés permisos para mover oportunidades.'); return; }
   const r = _kanbanRows.find(x => x.id === id);
   if (!r) return;
 
   const oldEstado = r.estado;
   if (oldEstado === newEstado) return;
 
-  // Check move permissions using canMoveCard
-  if (!canMoveCard(r)) {
+  // Check edit permissions
+  const session = AUTH.getSession();
+  if (session.perfil !== 'admin' && r.responsableUid !== session.uid) {
     TOAST.error('No tenés permisos para mover esta oportunidad.');
     return;
   }
@@ -1532,9 +1378,9 @@ async function handleKanbanDrop(id, newEstado) {
   try {
     await CRM.updateOportunidad(id, { estado: newEstado });
     TOAST.success(`"${r.nombre}" → ${newEstado}`);
-    // Refresh data in background (todos ven todas las cards)
+    // Refresh data in background
     const fresh = await CRM.getData();
-    _kanbanRows = fresh;
+    _kanbanRows = session.perfil === 'admin' ? fresh : fresh.filter(x => x.responsableUid === session.uid);
     renderKanban();
   } catch(err) {
     // Rollback on error
@@ -1609,35 +1455,6 @@ function renderMis(page) {
 }
 
 // ══════════════════════════════════════════════
-// CHECK USER ACTIVE STATUS
-// ══════════════════════════════════════════════
-async function checkUserActive() {
-  const session = AUTH.getSession();
-  if (!session) return;
-  try {
-    const doc = await firebase.firestore().collection('usuarios').doc(session.uid).get();
-    if (doc.exists) {
-      const data = doc.data();
-      if (data.activo === false) {
-        TOAST.error('Tu cuenta ha sido desactivada por un administrador.');
-        setTimeout(() => { AUTH.logout(); }, 2500);
-        return;
-      }
-      // Refrescar datos de sesión con lo más reciente de Firestore
-      session.perfil = data.perfil || session.perfil;
-      session.nombre = data.nombre || session.nombre;
-      session.email  = data.email  || session.email;
-      document.getElementById('userName').textContent = session.nombre.split(' ').slice(0, 2).join(' ');
-      const perfLabels = { 'admin': 'Admin', 'usuario': 'Usuario', 'solo lectura': 'Solo Lectura' };
-      document.getElementById('userPerfil').textContent = perfLabels[session.perfil] || session.perfil;
-      document.getElementById('userAvatar').textContent = session.nombre.split(' ').map(n => n[0]).slice(0, 2).join('');
-    }
-  } catch(e) {
-    console.error('Error verificando estado del usuario:', e);
-  }
-}
-
-// ══════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════
 function initApp() {
@@ -1646,23 +1463,10 @@ function initApp() {
   if (!session) return;
 
   // User info
-  const perfLabels = { 'admin': 'Admin', 'usuario': 'Usuario', 'solo lectura': 'Solo Lectura' };
   document.getElementById('userAvatar').textContent = session.nombre.split(' ').map(n => n[0]).slice(0, 2).join('');
   document.getElementById('userName').textContent   = session.nombre.split(' ').slice(0, 2).join(' ');
-  document.getElementById('userPerfil').textContent = perfLabels[session.perfil] || session.perfil;
+  document.getElementById('userPerfil').textContent = session.perfil;
   if (session.perfil === 'admin') document.getElementById('btnUsuarios').style.display = 'flex';
-
-  // Role-based UI: Solo Lectura
-  if (session.perfil === 'solo lectura') {
-    // Ocultar secciones del sidebar
-    document.querySelectorAll('[data-page="nueva"], [data-page="modificar"], [data-page="mis"]').forEach(el => {
-      el.style.display = 'none';
-    });
-    // Ocultar todos los botones "Nueva"
-    document.querySelectorAll('.btn-new-opp').forEach(el => {
-      el.style.display = 'none';
-    });
-  }
 
   // Sidebar toggle
   document.getElementById('toggleBtn').addEventListener('click', () =>
@@ -1676,10 +1480,6 @@ function initApp() {
   // Connection check
   checkConexion();
   setInterval(checkConexion, 60000);
-
-  // Check user active status periodically (cada 2 minutos)
-  checkUserActive();
-  setInterval(checkUserActive, 120000);
 
   // Real-time listener: si cambian datos en Firestore, actualizar
   CRM.onOportunidadesChange((freshData) => {

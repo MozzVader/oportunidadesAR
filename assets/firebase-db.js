@@ -10,17 +10,15 @@ const COLUMNS = [
   'probabilidad', 'pm', 'fechaCreacion', 'fechaModificacion'
 ];
 
-const ESTADOS  = ['En Desarrollo', 'Entregada', 'Finalizada', 'Pausa', 'Perdida', 'Ganada', 'Cancelada', 'No Go'];
+const ESTADOS  = ['En Desarrollo', 'Entregada', 'Finalizada', 'Pausa', 'Perdido', 'Ganado'];
 const ORIGENES = ['Fertilización', 'Otro', 'Proyecto', 'Renovación', 'RFP'];
 const ESTADO_COLORS = {
   'En Desarrollo': '#fde68a',
   'Entregada':     '#93c5fd',
   'Finalizada':    '#86efac',
   'Pausa':         '#fdba74',
-  'Perdida':       '#fca5a5',
-  'Ganada':        '#a7f3d0',
-  'Cancelada':     '#d4d4d8',
-  'No Go':         '#c4b5fd'
+  'Perdido':       '#fca5a5',
+  'Ganado':        '#a7f3d0'
 };
 
 // ── CACHE ──
