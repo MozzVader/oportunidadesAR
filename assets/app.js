@@ -32,6 +32,22 @@ function colorForValue(str) {
 // ══════════════════════════════════════════════
 // HELPERS
 // ══════════════════════════════════════════════
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 12) return 'Buenos días';
+  if (h >= 12 && h < 19) return 'Buenas tardes';
+  return 'Buenas noches';
+}
+
+function updateGreeting() {
+  const el = document.getElementById('heroGreeting');
+  if (el) {
+    const session = AUTH.getSession();
+    const nombre = session ? session.nombre.split(' ')[0] : '';
+    el.textContent = getGreeting() + (nombre ? ', ' + nombre : '');
+  }
+}
+
 function toInputDate(val) {
   if (!val || val === '') return '';
   if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
@@ -213,6 +229,7 @@ function setStatus(state) {
 // HOME
 // ══════════════════════════════════════════════
 async function renderHome() {
+  updateGreeting();
   const rows = await CRM.getData();
   const totalTCV = rows.reduce((s, r) => s + (parseFloat(r.tcvEur) || 0), 0);
   const enDes = rows.filter(r => r.estado === 'En Desarrollo').length;
