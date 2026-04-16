@@ -317,6 +317,7 @@ body.dark-mode .kanban-col.dragover { background:color-mix(in srgb, var(--accent
 .kanban-col-body { flex:1;overflow-y:auto;padding:0 8px 8px;display:flex;flex-direction:column;gap:8px;min-height:40px; }
 .kanban-col-body.dragover { background:color-mix(in srgb, var(--accent) 4%, transparent);border-radius:0 0 var(--radius-sm) var(--radius-sm); }
 .kanban-card { background:var(--surface);border:1px solid var(--border);border-left:4px solid transparent;border-radius:var(--radius-sm);padding:10px 12px;cursor:grab;transition:box-shadow 0.2s, transform 0.15s, opacity 0.15s, border-color 0.2s;user-select:none; }
+body.dark-mode .kanban-card { background:#2a2a28;border-color:#333330; }
 .kanban-card:hover { box-shadow:0 2px 8px rgba(0,0,0,0.08);transform:translateY(-1px); }
 .kanban-card.dragging { opacity:0.4;transform:rotate(2deg); }
 .kanban-card-id { font-size:10px;font-weight:600;color:var(--text-muted);letter-spacing:0.05em;margin-bottom:6px; }
