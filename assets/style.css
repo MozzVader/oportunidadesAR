@@ -157,7 +157,7 @@ body.dark-mode .topbar { background: var(--glass-bg); }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 .status-text { font-size: 11px; color: var(--text-muted); font-weight: 500; transition: color 0.3s; }
 .page-content { flex: 1; overflow-y: auto; background: transparent; }
-#page-kanban.active { overflow: hidden; }
+#page-kanban.active { display: flex !important; flex-direction: column; overflow: hidden; }
 .page-section { display: none; padding: 32px; }
 .page-section.active { display: block; }
 
@@ -306,7 +306,7 @@ body.dark-mode tr:hover td { background:rgba(138,56,254,0.05); }
 #importPreviewTable tbody td { padding:6px 12px;border-bottom:1px solid var(--border);color:var(--text);max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
 
 /* ── KANBAN BOARD ── */
-.kanban-board { display:flex;gap:10px;overflow-x:hidden;overflow-y:hidden;padding-bottom:0;min-height:0;height:calc(100vh - 240px); }
+.kanban-board { display:flex;gap:10px;overflow-x:hidden;overflow-y:hidden;padding-bottom:0;min-height:0;flex:1; }
 .kanban-col { flex:1 1 0;min-width:0;background:rgba(255,255,255,0.45);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.3);border-radius:var(--radius);display:flex;flex-direction:column;overflow:hidden;transition:border-color 0.2s, background 0.2s; }
 body.dark-mode .kanban-col { background:rgba(20,18,24,0.6);border-color:rgba(255,255,255,0.08); }
 .kanban-col.dragover { border-color:var(--accent);background:color-mix(in srgb, var(--accent) 8%, rgba(255,255,255,0.45)); }
