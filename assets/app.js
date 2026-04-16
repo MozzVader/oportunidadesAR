@@ -1380,20 +1380,16 @@ async function initKanban() {
 
   const session = AUTH.getSession();
   const raw = await CRM.getData();
-  _kanbanRows = session.perfil === 'admin' ? raw : raw.filter(r => r.responsableUid === session.uid);
+  // Todos los roles ven todas las cards del Kanban
+  _kanbanRows = raw;
 
-  // Populate responsables filter (admin only)
+  // Populate responsables filter (available for all roles)
   const selR = document.getElementById('k_responsable');
   const filters = document.getElementById('kanbanFilters');
-  if (session.perfil === 'admin') {
-    filters.style.display = 'flex';
-    const resps = [...new Set(_kanbanRows.map(r => r.responsable).filter(Boolean))].sort();
-    selR.innerHTML = '<option value="">Todos los responsables</option>';
-    resps.forEach(r => selR.innerHTML += `<option>${r}</option>`);
-  } else {
-    filters.style.display = 'flex';
-    selR.style.display = 'none';
-  }
+  filters.style.display = 'flex';
+  const resps = [...new Set(_kanbanRows.map(r => r.responsable).filter(Boolean))].sort();
+  selR.innerHTML = '<option value="">Todos los responsables</option>';
+  resps.forEach(r => selR.innerHTML += `<option>${r}</option>`);
 
   loading.style.display = 'none';
   board.style.display = 'flex';
@@ -1460,11 +1456,21 @@ function renderKanban() {
   });
 }
 
+function canMoveCard(r) {
+  const s = AUTH.getSession();
+  if (!s) return false;
+  if (s.perfil === 'admin') return true;
+  if (s.perfil === 'solo lectura') return false;
+  // usuario: solo puede mover sus propias cards
+  return r.responsableUid === s.uid;
+}
+
 function renderKanbanCard(r) {
   const color = CRM.ESTADO_COLORS[r.estado] || 'var(--border)';
   const tcvDisplay = r.tcv ? Number(r.tcv).toLocaleString('es-AR') + (r.currency ? ' ' + r.currency : '') : '—';
+  const movable = canMoveCard(r);
   return `
-    <div class="kanban-card"${isReadOnly() ? '' : ' draggable="true"'} data-id="${r.id}" data-estado="${r.estado}" style="border-left-color:${color}">
+    <div class="kanban-card${movable ? '' : ' kanban-card-locked'}"${movable ? ' draggable="true"' : ''} data-id="${r.id}" data-estado="${r.estado}" style="border-left-color:${color}">
       <div class="kanban-card-id">${friendlyId(r)}</div>
       <div class="kanban-card-client">${r.cliente || '—'}</div>
       <div class="kanban-card-name">${r.nombre || '—'}</div>
@@ -1513,9 +1519,8 @@ async function handleKanbanDrop(id, newEstado) {
   const oldEstado = r.estado;
   if (oldEstado === newEstado) return;
 
-  // Check edit permissions
-  const session = AUTH.getSession();
-  if (session.perfil !== 'admin' && r.responsableUid !== session.uid) {
+  // Check move permissions using canMoveCard
+  if (!canMoveCard(r)) {
     TOAST.error('No tenés permisos para mover esta oportunidad.');
     return;
   }
@@ -1527,9 +1532,9 @@ async function handleKanbanDrop(id, newEstado) {
   try {
     await CRM.updateOportunidad(id, { estado: newEstado });
     TOAST.success(`"${r.nombre}" → ${newEstado}`);
-    // Refresh data in background
+    // Refresh data in background (todos ven todas las cards)
     const fresh = await CRM.getData();
-    _kanbanRows = session.perfil === 'admin' ? fresh : fresh.filter(x => x.responsableUid === session.uid);
+    _kanbanRows = fresh;
     renderKanban();
   } catch(err) {
     // Rollback on error
