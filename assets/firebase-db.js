@@ -3,7 +3,7 @@
 const OPORTUNIDADES_COL = 'oportunidades';
 
 const COLUMNS = [
-  'id', 'cliente', 'industria', 'practica',
+  'codigo', 'cliente', 'industria', 'practica',
   'nombre', 'descripcion', 'origen',
   'responsable', 'responsableUid', 'estado', 'fechaInicio', 'fechaEntrega',
   'notas', 'tcv', 'currency', 'tcvEur', 'tipoCambio',
@@ -36,6 +36,7 @@ function docToObj(doc) {
   const d = doc.data();
   return {
     id:              doc.id,
+    codigo:          d.codigo || '',
     cliente:         d.cliente         || '',
     industria:       d.industria       || '',
     practica:        d.practica        || '',
@@ -77,13 +78,36 @@ async function getData(forceRefresh = false) {
   }
 }
 
+// ── COUNTER (código secuencial OPP-XXXX) ──
+async function getNextCodigo() {
+  const counterRef = firebase.firestore().collection('counters').doc('oportunidades');
+  try {
+    const result = await firebase.firestore().runTransaction(async (tx) => {
+      const snap = await tx.get(counterRef);
+      if (!snap.exists) {
+        tx.set(counterRef, { nextId: 2 });
+        return 1;
+      }
+      const nextId = snap.data().nextId || 1;
+      tx.update(counterRef, { nextId: nextId + 1 });
+      return nextId;
+    });
+    return 'OPP-' + String(result).padStart(4, '0');
+  } catch(e) {
+    console.error('Error obteniendo código secuencial:', e);
+    return 'OPP-' + Date.now().toString(36).toUpperCase();
+  }
+}
+
 // ── ADD ──
 async function addOportunidad(data) {
   try {
     const session = AUTH.getSession();
     const now = new Date().toISOString();
+    const codigo = await getNextCodigo();
 
     const docData = {
+      codigo:            codigo,
       cliente:           data.cliente         || '',
       industria:         data.industria       || '',
       practica:          data.practica        || '',
@@ -187,7 +211,7 @@ function downloadExcel(rows) {
   try {
     // Mapear a formato original con nombres legibles para el Excel
     const mapped = rows.map(r => ({
-      'ID':                      r.id,
+      'Código':                  r.codigo || r.id.substring(0,8),
       'Cliente':                 r.cliente,
       'Industria':               r.industria,
       'Práctica/Área':           r.practica,
@@ -209,8 +233,9 @@ function downloadExcel(rows) {
       'Fecha Modificación':      r.fechaModificacion
     }));
 
-    const ws = XLSX.utils.json_to_sheet(mapped.length ? mapped : [Object.fromEntries(COLUMNS.map(c => [c, '']))]);
-    ws['!cols'] = [6,25,18,14,30,20,14,18,14,14,14,20,12,10,12,14,14,10,14,14].map(w => ({ wch: w }));
+    const cols = ['Código','Cliente','Industria','Práctica/Área','Nombre de la Oportunidad','Descripción','Origen','Responsable','Estado','Fecha de Inicio','Fecha de Entrega','Notas','TCV','Currency','TCV EUR','Tipo de Cambio','% Probabilidad','% PM','Fecha Creación','Fecha Modificación'];
+    const ws = XLSX.utils.json_to_sheet(mapped.length ? mapped : [Object.fromEntries(cols.map(c => [c, '']))]);
+    ws['!cols'] = [12,25,18,14,30,20,14,18,14,14,14,20,12,10,12,14,14,10,14,14].map(w => ({ wch: w }));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Oportunidades');
 
@@ -243,6 +268,6 @@ function downloadExcel(rows) {
 
 window.CRM = {
   getData, addOportunidad, updateOportunidad, deleteOportunidad,
-  getOportunidad, downloadExcel, onOportunidadesChange,
+  getOportunidad, downloadExcel, onOportunidadesChange, getNextCodigo,
   COLUMNS, ESTADOS, ORIGENES, ESTADO_COLORS, invalidateCache
 };

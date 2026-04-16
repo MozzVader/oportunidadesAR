@@ -73,6 +73,10 @@ function fmtEUR(n) {
   return '€' + Number(n || 0).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
+function friendlyId(r) {
+  return r.codigo || r.id.substring(0, 8);
+}
+
 function canEdit(r) {
   const s = AUTH.getSession();
   if (!s) return false;
@@ -391,7 +395,7 @@ function doModSearch() {
   let rows = _modRows;
   if (session && session.perfil !== 'admin') rows = rows.filter(r => r.responsableUid === session.uid);
   const filtered = q
-    ? rows.filter(r => (r.cliente || '').toLowerCase().includes(q) || (r.nombre || '').toLowerCase().includes(q) || (r.id || '').toLowerCase().includes(q))
+    ? rows.filter(r => (r.cliente || '').toLowerCase().includes(q) || (r.nombre || '').toLowerCase().includes(q) || (r.codigo || '').toLowerCase().includes(q))
     : rows.slice(0, 20);
   const list  = document.getElementById('modResultList');
   const empty = document.getElementById('modEmptySearch');
@@ -399,7 +403,7 @@ function doModSearch() {
   empty.style.display = 'none';
   list.innerHTML = filtered.slice(0, 20).map(r => `
     <div class="result-item" onclick="loadModItem('${r.id}')">
-      <div><div class="result-item-name">${r.nombre || '—'}</div><div class="result-item-sub">${r.cliente || '—'} · ID ${r.id.substring(0,8)}...</div></div>
+      <div><div class="result-item-name">${r.nombre || '—'}</div><div class="result-item-sub">${r.cliente || '—'} · ${friendlyId(r)}</div></div>
       <span class="badge ${badgeEstado(r.estado)}">${r.estado || '—'}</span>
     </div>`).join('');
 }
@@ -560,7 +564,7 @@ function renderTabla() {
     if (prac && r.practica !== prac) return false;
     if (resp && r.responsable !== resp) return false;
     if (q) {
-      const h = [r.id, r.cliente, r.nombre, r.responsable].join(' ').toLowerCase();
+      const h = [r.codigo, r.cliente, r.nombre, r.responsable].join(' ').toLowerCase();
       if (!h.includes(q)) return false;
     }
     return true;
@@ -577,7 +581,7 @@ function renderTabla() {
   empty.style.display = 'none';
   body.innerHTML = rows.map(r => `
     <tr>
-      <td class="col-id">${r.id.substring(0,8)}...</td>
+      <td class="col-id">${friendlyId(r)}</td>
       <td style="font-weight:600">${r.cliente || '—'}</td>
       <td style="max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.nombre || '—'}</td>
       <td style="color:var(--text-muted)">${r.responsable || '—'}</td>
@@ -598,7 +602,7 @@ function verOportunidad(id) {
   const r = _tablaRows.find(x => x.id === id);
   if (!r) return;
 
-  document.getElementById('verModalId').textContent = `ID ${r.id.substring(0,8)}...`;
+  document.getElementById('verModalId').textContent = friendlyId(r);
   document.getElementById('verModalTitle').textContent = r.nombre || '—';
   document.getElementById('verModalEditBtn').setAttribute('onclick', `closeVerModal(); editFromTabla('${id}')`);
 
@@ -766,7 +770,6 @@ function renderPerfil() {
       <div style="width:56px;height:56px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;flex-shrink:0">${s.nombre.split(' ').map(n => n[0]).slice(0, 2).join('')}</div>
       <div><div style="font-size:16px;font-weight:700">${s.nombre}</div><div style="font-size:12px;color:var(--text-muted);margin-top:2px">${s.email}</div></div>
     </div>
-    ${infoRow('Usuario', s.usuario)}
     ${infoRow('Perfil', `<span class="badge ${perfBadge}">${s.perfil}</span>`)}
     ${infoRow('Estado', '<span class="badge badge-activa">Activo</span>')}`;
   updateThemeUI();
@@ -827,7 +830,6 @@ async function loadUsuarios() {
   document.getElementById('usuariosBody').innerHTML = _allUsers.map(u => `
     <tr>
       <td style="font-weight:600">${u.nombre}</td>
-      <td style="color:var(--text-muted)">${u.usuario}</td>
       <td style="color:var(--text-muted);font-size:12px">${u.email}</td>
       <td><span class="badge ${u.perfil === 'admin' ? 'badge-admin' : 'badge-usuario'}">${u.perfil}</span></td>
       <td><span class="badge ${u.activo ? 'badge-activa' : 'badge-cerrada'}">${u.activo ? 'Activo' : 'Inactivo'}</span></td>
@@ -843,7 +845,6 @@ function openUserModal(mode, uid) {
     document.getElementById('userModalTitle').textContent = 'Nuevo Usuario';
     document.getElementById('userModalSub').textContent = 'Completá los datos del nuevo usuario.';
     document.getElementById('um_btn').textContent = 'Crear Usuario';
-    document.getElementById('um_usuario').disabled = false;
     document.getElementById('um_passGroup').style.display = 'block';
     document.getElementById('um_passResetGroup').style.display = 'none';
     document.getElementById('um_pass').required = true;
@@ -854,8 +855,6 @@ function openUserModal(mode, uid) {
     document.getElementById('userModalSub').textContent = `Modificando: ${u.nombre}`;
     document.getElementById('um_usuarioOriginal').value = uid;
     document.getElementById('um_nombre').value = u.nombre;
-    document.getElementById('um_usuario').value = u.usuario;
-    document.getElementById('um_usuario').disabled = true;
     document.getElementById('um_email').value = u.email;
     document.getElementById('um_perfil').value = u.perfil;
     document.getElementById('um_activo').value = u.activo ? 'SI' : 'NO';
@@ -882,7 +881,7 @@ async function handleUserModalSubmit(e) {
       if (pass.length < 6) { showModalAlert('La contraseña debe tener al menos 6 caracteres.'); return; }
       const result = await AUTH.addUser({
         nombre:     document.getElementById('um_nombre').value,
-        usuario:    document.getElementById('um_usuario').value,
+        usuario:    document.getElementById('um_email').value.split('@')[0],
         email:      document.getElementById('um_email').value,
         contrasena: pass,
         perfil:     document.getElementById('um_perfil').value,
@@ -957,7 +956,7 @@ function renderMis() {
   const est = document.getElementById('mis_estado').value;
   const rows = _misRows.filter(r => {
     if (est && r.estado !== est) return false;
-    if (q) { const h = [r.id, r.cliente, r.nombre].join(' ').toLowerCase(); if (!h.includes(q)) return false; }
+    if (q) { const h = [r.codigo, r.cliente, r.nombre].join(' ').toLowerCase(); if (!h.includes(q)) return false; }
     return true;
   }).sort((a, b) => {
     let av = a[_misSortKey] || '', bv = b[_misSortKey] || '';
@@ -971,7 +970,7 @@ function renderMis() {
   empty.style.display = 'none';
   body.innerHTML = rows.map(r => `
     <tr>
-      <td class="col-id">${r.id.substring(0,8)}...</td>
+      <td class="col-id">${friendlyId(r)}</td>
       <td style="font-weight:600">${r.cliente || '—'}</td>
       <td style="max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.nombre || '—'}</td>
       <td><span class="badge ${badgeEstado(r.estado)}">${r.estado || '—'}</span></td>
