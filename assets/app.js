@@ -80,7 +80,7 @@ function canEdit(r) {
 }
 
 function badgeEstado(e) {
-  return { 'En Desarrollo': 'badge-calificación', 'Entregada': 'badge-propuesta', 'Finalizada': 'badge-ganado' }[e] || '';
+  return { 'En Desarrollo': 'badge-desarrollo', 'Entregada': 'badge-entregada', 'Finalizada': 'badge-finalizada', 'Pausa': 'badge-pausa', 'Perdido': 'badge-perdido', 'Ganado': 'badge-ganado' }[e] || '';
 }
 
 function showAlert(id, msg, type) {
@@ -760,7 +760,7 @@ async function renderStats() {
 function renderPerfil() {
   const s = AUTH.getSession();
   if (!s) return;
-  const perfBadge = s.perfil === 'admin' ? 'badge-ganado' : 'badge-propuesta';
+  const perfBadge = s.perfil === 'admin' ? 'badge-admin' : 'badge-usuario';
   document.getElementById('perfilInfo').innerHTML =
     `<div style="display:flex;align-items:center;gap:16px;margin-bottom:24px">
       <div style="width:56px;height:56px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;flex-shrink:0">${s.nombre.split(' ').map(n => n[0]).slice(0, 2).join('')}</div>
@@ -829,7 +829,7 @@ async function loadUsuarios() {
       <td style="font-weight:600">${u.nombre}</td>
       <td style="color:var(--text-muted)">${u.usuario}</td>
       <td style="color:var(--text-muted);font-size:12px">${u.email}</td>
-      <td><span class="badge ${u.perfil === 'admin' ? 'badge-ganado' : 'badge-propuesta'}">${u.perfil}</span></td>
+      <td><span class="badge ${u.perfil === 'admin' ? 'badge-admin' : 'badge-usuario'}">${u.perfil}</span></td>
       <td><span class="badge ${u.activo ? 'badge-activa' : 'badge-cerrada'}">${u.activo ? 'Activo' : 'Inactivo'}</span></td>
       <td style="text-align:center"><button class="btn-sm" onclick="openUserModal('edit','${u.uid}')">Editar</button></td>
     </tr>`).join('');

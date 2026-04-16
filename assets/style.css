@@ -240,22 +240,30 @@ body.dark-mode .btn-danger:hover { background: rgba(239,68,68,0.1); }
 .btn-sm:hover { border-color:var(--text); }
 body.dark-mode .btn-sm { color: var(--text); border-color: var(--border); }
 .badge { display:inline-flex;align-items:center;padding:3px 10px;border-radius:var(--radius-sm);font-size:11px;font-weight:600;letter-spacing:0.03em; }
-.badge-prospecto { background:rgba(241,245,249,0.7);backdrop-filter:blur(4px);color:#64748b; }
-.badge-propuesta { background:rgba(219,234,254,0.7);backdrop-filter:blur(4px);color:#1d4ed8; }
-.badge-calificación { background:rgba(254,249,195,0.7);backdrop-filter:blur(4px);color:#a16207; }
-.badge-ganado { background:rgba(220,252,231,0.7);backdrop-filter:blur(4px);color:#166534; }
-.badge-perdido { background:rgba(254,226,226,0.7);backdrop-filter:blur(4px);color:#991b1b; }
-.badge-activa { background:rgba(220,252,231,0.7);backdrop-filter:blur(4px);color:#166534; }
-.badge-pausa { background:rgba(254,249,195,0.7);backdrop-filter:blur(4px);color:#a16207; }
-.badge-cerrada { background:rgba(241,245,249,0.7);backdrop-filter:blur(4px);color:#64748b; }
-body.dark-mode .badge-prospecto { background:rgba(30,41,59,0.6); color:#94a3b8; }
-body.dark-mode .badge-propuesta { background:rgba(30,58,138,0.6); color:#93c5fd; }
-body.dark-mode .badge-calificación { background:rgba(113,63,18,0.6); color:#fde68a; }
-body.dark-mode .badge-ganado { background:rgba(22,101,52,0.6); color:#86efac; }
-body.dark-mode .badge-perdido { background:rgba(127,29,29,0.6); color:#fca5a5; }
-body.dark-mode .badge-activa { background:rgba(22,101,52,0.6); color:#86efac; }
-body.dark-mode .badge-pausa { background:rgba(113,63,18,0.6); color:#fde68a; }
-body.dark-mode .badge-cerrada { background:rgba(30,41,59,0.6); color:#94a3b8; }
+/* ── Estados de Oportunidad ── */
+.badge-desarrollo { background:rgba(254,249,195,0.75);backdrop-filter:blur(4px);color:#92400e; }
+.badge-entregada  { background:rgba(219,234,254,0.75);backdrop-filter:blur(4px);color:#1e40af; }
+.badge-finalizada { background:rgba(220,252,231,0.75);backdrop-filter:blur(4px);color:#166534; }
+.badge-pausa      { background:rgba(254,231,179,0.75);backdrop-filter:blur(4px);color:#9a3412; }
+.badge-perdido    { background:rgba(254,226,226,0.75);backdrop-filter:blur(4px);color:#991b1b; }
+.badge-ganado     { background:rgba(167,243,208,0.75);backdrop-filter:blur(4px);color:#065f46; }
+/* ── Perfil de Usuario ── */
+.badge-admin   { background:rgba(233,213,255,0.75);backdrop-filter:blur(4px);color:#6b21a8; }
+.badge-usuario { background:rgba(224,231,255,0.75);backdrop-filter:blur(4px);color:#3730a3; }
+/* ── Estado de Cuenta ── */
+.badge-activa  { background:rgba(220,252,231,0.75);backdrop-filter:blur(4px);color:#166534; }
+.badge-cerrada { background:rgba(241,245,249,0.75);backdrop-filter:blur(4px);color:#475569; }
+/* ── Dark Mode Badges ── */
+body.dark-mode .badge-desarrollo { background:rgba(113,63,18,0.5); color:#fde68a; }
+body.dark-mode .badge-entregada  { background:rgba(30,58,138,0.5); color:#93c5fd; }
+body.dark-mode .badge-finalizada { background:rgba(22,101,52,0.5); color:#86efac; }
+body.dark-mode .badge-pausa      { background:rgba(154,52,18,0.5); color:#fdba74; }
+body.dark-mode .badge-perdido    { background:rgba(127,29,29,0.5); color:#fca5a5; }
+body.dark-mode .badge-ganado     { background:rgba(6,95,70,0.5); color:#a7f3d0; }
+body.dark-mode .badge-admin      { background:rgba(107,33,168,0.4); color:#e9d5ff; }
+body.dark-mode .badge-usuario    { background:rgba(55,48,163,0.4); color:#c7d2fe; }
+body.dark-mode .badge-activa     { background:rgba(22,101,52,0.5); color:#86efac; }
+body.dark-mode .badge-cerrada    { background:rgba(30,41,59,0.5); color:#94a3b8; }
 .alert { padding:12px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;margin-bottom:16px;display:none; }
 .alert-success { background:rgba(220,252,231,0.7);backdrop-filter:blur(4px);color:#166534;border:1px solid #bbf7d0; }
 .alert-error { background:rgba(254,226,226,0.7);backdrop-filter:blur(4px);color:#991b1b;border:1px solid #fecaca; }
