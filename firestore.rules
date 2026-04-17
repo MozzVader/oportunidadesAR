@@ -7,21 +7,37 @@ service cloud.firestore {
     function isAdmin() {
       return request.auth != null && getUserRole() == 'admin';
     }
+    function isUsuario() {
+      return request.auth != null && getUserRole() == 'usuario';
+    }
+    function isSoloLectura() {
+      return request.auth != null && getUserRole() == 'solo lectura';
+    }
+    function isAuthenticated() {
+      return request.auth != null;
+    }
     function isOwnUser(userId) {
       return request.auth != null && request.auth.uid == userId;
     }
+
     match /usuarios/{userId} {
       allow read: if isAdmin() || isOwnUser(userId);
       allow write: if isAdmin() || (isOwnUser(userId) && request.auth != null);
     }
+
     match /oportunidades/{oppId} {
-      allow read: if isAdmin() || (request.auth != null && resource.data.responsableUid == request.auth.uid);
-      allow create: if isAdmin() || (request.auth != null && request.resource.data.responsableUid == request.auth.uid);
-      allow update: if isAdmin() || (request.auth != null && resource.data.responsableUid == request.auth.uid);
+      // Lectura: todos los roles autenticados pueden leer todas
+      allow read: if isAuthenticated();
+      // Crear: admin o usuario (no solo lectura)
+      allow create: if isAdmin() || isUsuario();
+      // Actualizar: admin o usuario que sea responsable
+      allow update: if isAdmin() || (isUsuario() && request.resource.data.responsable == get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.nombre);
+      // Eliminar: solo admin
       allow delete: if isAdmin();
     }
+
     match /counters/{counterId} {
-      allow read, write: if request.auth != null;
+      allow read, write: if isAuthenticated();
     }
   }
 }
