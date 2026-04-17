@@ -269,9 +269,10 @@ function onPageEnter(page) {
 // STATUS CHECK
 // ══════════════════════════════════════════════
 async function checkConexion() {
+  // Primero verificar conexion de red (no consume Firebase)
+  if (!navigator.onLine) { setStatus('error'); return; }
   setStatus('sincronizando');
   try {
-    // Con Firebase, simplemente verificamos que podemos leer
     await firebase.firestore().collection('oportunidades').limit(1).get();
     setStatus('conectado');
   } catch(e) { setStatus('error'); }
@@ -1491,7 +1492,7 @@ function initApp() {
 
   // Connection check
   checkConexion();
-  setInterval(checkConexion, 60000);
+  setInterval(checkConexion, 300000); // 5 minutos
 
   // Real-time listener: si cambian datos en Firestore, actualizar
   CRM.onOportunidadesChange((freshData) => {
