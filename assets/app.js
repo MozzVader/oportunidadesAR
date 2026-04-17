@@ -86,6 +86,16 @@ function renderPagination(containerId, state, onPageChange) {
 // ══════════════════════════════════════════════
 // HELPERS
 // ══════════════════════════════════════════════
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function getGreeting() {
   const h = new Date().getHours();
   if (h >= 5 && h < 12) return 'Buenos días';
@@ -294,9 +304,9 @@ async function renderHome() {
   const rows = await CRM.getData();
   const totalTCV = rows.reduce((s, r) => s + (parseFloat(r.tcvEur) || 0), 0);
   const enDes = rows.filter(r => r.estado === 'En Desarrollo').length;
-  const fin   = rows.filter(r => r.estado === 'Finalizada').length;
-  const ent   = rows.filter(r => r.estado === 'Entregada').length;
-  const winRate = (fin + ent) > 0 ? Math.round(fin / (fin + ent) * 100) : 0;
+  const ganadas  = rows.filter(r => r.estado === 'Ganada').length;
+  const perdidas = rows.filter(r => r.estado === 'Perdida').length;
+  const winRate  = (ganadas + perdidas) > 0 ? Math.round(ganadas / (ganadas + perdidas) * 100) : 0;
 
   const homeStats = document.getElementById('homeStats');
   if (homeStats) {
@@ -322,7 +332,7 @@ async function renderHome() {
   const etapaLegend = document.getElementById('etapaLegend');
   if (etapaLegend) {
     etapaLegend.innerHTML = CRM.ESTADOS.map(e =>
-      `<div class="etapa-item"><div class="etapa-dot" style="background:${CRM.ESTADO_COLORS[e]}"></div>${e} (${counts[e]})</div>`
+      `<div class="etapa-item"><div class="etapa-dot" style="background:${CRM.ESTADO_COLORS[e]}"></div>${escapeHtml(e)} (${counts[e]})</div>`
     ).join('');
   }
 
@@ -332,7 +342,7 @@ async function renderHome() {
     recientesContent.innerHTML = recientes.length === 0
       ? '<div class="empty"><div class="empty-text">Sin oportunidades aún</div></div>'
       : `<table><thead><tr><th>Nombre</th><th>Cliente</th><th>Estado</th></tr></thead><tbody>${recientes.map(r =>
-          `<tr><td>${r.nombre || '—'}</td><td style="color:var(--text-muted)">${r.cliente || '—'}</td><td><span class="badge ${badgeEstado(r.estado)}">${r.estado || '—'}</span></td></tr>`
+          `<tr><td>${escapeHtml(r.nombre) || '—'}</td><td style="color:var(--text-muted)">${escapeHtml(r.cliente) || '—'}</td><td><span class="badge ${badgeEstado(r.estado)}">${escapeHtml(r.estado) || '—'}</span></td></tr>`
         ).join('')}</tbody></table>`;
   }
 }
@@ -341,6 +351,8 @@ async function renderHome() {
 // FX (Conversión de divisas)
 // ══════════════════════════════════════════════
 const _fxRates = {};
+const _fxCache = {};       // Cache por moneda: { ARS: { rate, ts }, USD: { rate, ts } }
+const _FX_CACHE_TTL = 30 * 60 * 1000; // 30 minutos
 
 async function fetchFX(prefix) {
   const currency = document.getElementById(`${prefix}_currency`).value;
@@ -351,17 +363,33 @@ async function fetchFX(prefix) {
     calcFX(prefix);
     return;
   }
+
+  // Verificar cache por moneda
+  const cached = _fxCache[currency];
+  if (cached && (Date.now() - cached.ts < _FX_CACHE_TTL)) {
+    _fxRates[prefix] = cached.rate;
+    document.getElementById(`${prefix}_tipoCambio`).value = cached.rate.toFixed(6);
+    const badge = document.getElementById(`${prefix}_fxBadge`);
+    badge.style.display = 'inline-flex';
+    badge.textContent = `1 ${currency} = ${cached.rate.toFixed(4)} EUR`;
+    calcFX(prefix);
+    return;
+  }
+
   document.getElementById(`${prefix}_tcvEurValue`).className = 'fx-loading';
   document.getElementById(`${prefix}_tcvEurValue`).textContent = 'Obteniendo tipo de cambio...';
   document.getElementById(`${prefix}_fxBadge`).style.display = 'none';
   try {
     const res  = await fetch(`https://api.exchangerate-api.com/v4/latest/${currency}`);
     const data = await res.json();
-    _fxRates[prefix] = data.rates['EUR'];
-    document.getElementById(`${prefix}_tipoCambio`).value = _fxRates[prefix].toFixed(6);
+    const rate = data.rates['EUR'];
+    _fxRates[prefix] = rate;
+    // Guardar en cache por moneda
+    _fxCache[currency] = { rate, ts: Date.now() };
+    document.getElementById(`${prefix}_tipoCambio`).value = rate.toFixed(6);
     const badge = document.getElementById(`${prefix}_fxBadge`);
     badge.style.display = 'inline-flex';
-    badge.textContent = `1 ${currency} = ${_fxRates[prefix].toFixed(4)} EUR`;
+    badge.textContent = `1 ${currency} = ${rate.toFixed(4)} EUR`;
     calcFX(prefix);
   } catch(e) {
     document.getElementById(`${prefix}_tcvEurValue`).textContent = 'Error al obtener tipo de cambio';
@@ -592,13 +620,13 @@ async function initTabla() {
   const resps = [...new Set(_tablaRows.map(r => r.responsable).filter(Boolean))].sort();
   const selR = document.getElementById('t_responsable');
   selR.innerHTML = '<option value="">Todos los responsables</option>';
-  resps.forEach(r => selR.innerHTML += `<option>${r}</option>`);
+  resps.forEach(r => selR.innerHTML += `<option>${escapeHtml(r)}</option>`);
 
   // Populate clientes
   const clientes = [...new Set(_tablaRows.map(r => r.cliente).filter(Boolean))].sort();
   const selC = document.getElementById('t_cliente');
   selC.innerHTML = '<option value="">Todos los clientes</option>';
-  clientes.forEach(cl => selC.innerHTML += `<option>${cl}</option>`);
+  clientes.forEach(cl => selC.innerHTML += `<option>${escapeHtml(cl)}</option>`);
 
   _tablaPage = 1;
   renderTabla();
@@ -644,11 +672,11 @@ function renderTabla(page) {
   const pg = paginate(rows, _tablaPage);
   body.innerHTML = pg.rows.map(r => `
     <tr>
-      <td class="col-id">${friendlyId(r)}</td>
-      <td style="font-weight:600">${r.cliente || '—'}</td>
-      <td style="max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.nombre || '—'}</td>
-      <td style="color:var(--text-muted)">${r.responsable || '—'}</td>
-      <td><span class="badge ${badgeEstado(r.estado)}">${r.estado || '—'}</span></td>
+      <td class="col-id">${escapeHtml(friendlyId(r))}</td>
+      <td style="font-weight:600">${escapeHtml(r.cliente) || '—'}</td>
+      <td style="max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(r.nombre) || '—'}</td>
+      <td style="color:var(--text-muted)">${escapeHtml(r.responsable) || '—'}</td>
+      <td><span class="badge ${badgeEstado(r.estado)}">${escapeHtml(r.estado) || '—'}</span></td>
       <td class="col-action" style="display:flex;gap:6px;justify-content:center">
         <button class="btn-sm" onclick="verOportunidad('${r.id}')">Ver</button>
         ${canEdit(r) ? `<button class="btn-sm" onclick="editFromTabla('${r.id}')">Editar</button>` : ''}
@@ -678,27 +706,27 @@ function verOportunidad(id) {
     {
       title: 'Información General',
       rows: [
-        ['Cliente',       r.cliente],
-        ['Industria',     r.industria],
-        ['Práctica/Área', r.practica],
-        ['Descripción',   r.descripcion],
-        ['Origen',        r.origen],
+        ['Cliente',       escapeHtml(r.cliente)],
+        ['Industria',     escapeHtml(r.industria)],
+        ['Práctica/Área', escapeHtml(r.practica)],
+        ['Descripción',   escapeHtml(r.descripcion)],
+        ['Origen',        escapeHtml(r.origen)],
       ]
     },
     {
       title: 'BID',
       rows: [
-        ['Responsable',      r.responsable],
-        ['Estado',           `<span class="badge ${badgeEstado(r.estado)}">${r.estado || '—'}</span>`],
+        ['Responsable',      escapeHtml(r.responsable)],
+        ['Estado',           `<span class="badge ${badgeEstado(r.estado)}">${escapeHtml(r.estado) || '—'}</span>`],
         ['Fecha de Inicio',  fmtFecha(r.fechaInicio)],
         ['Fecha de Entrega', fmtFecha(r.fechaEntrega)],
-        ['Notas',            r.notas],
+        ['Notas',            escapeHtml(r.notas)],
       ]
     },
     {
       title: 'Datos Comerciales',
       rows: [
-        ['TCV',            fmtNum(r.tcv) + (r.currency ? ' ' + r.currency : '')],
+        ['TCV',            fmtNum(r.tcv) + (r.currency ? ' ' + escapeHtml(r.currency) : '')],
         ['TCV EUR',        fmtEURv(r.tcvEur)],
         ['Tipo de Cambio', fmtVal(r.tipoCambio)],
         ['% Probabilidad', r.probabilidad ? r.probabilidad + '%' : '—'],
@@ -822,13 +850,13 @@ function renderCalendario() {
       dayEvents.slice(0, 3).forEach(ev => {
         const color = CRM.ESTADO_COLORS[ev.row.estado] || 'var(--text-muted)';
         if (ev.type === 'entrega') {
-          html += `<div class="cal-event cal-event-entrega" style="border-left-color:${color}" onclick="verOportunidad('${ev.row.id}')" title="${ev.row.nombre || ''} — ${ev.row.cliente || ''}">
+          html += `<div class="cal-event cal-event-entrega" style="border-left-color:${color}" onclick="verOportunidad('${ev.row.id}')" title="${escapeHtml(ev.row.nombre || '')} — ${escapeHtml(ev.row.cliente || '')}">
             <span class="cal-event-dot" style="background:${color}"></span>
-            <span class="cal-event-text">${ev.row.nombre || '—'}</span>
+            <span class="cal-event-text">${escapeHtml(ev.row.nombre) || '—'}</span>
           </div>`;
         } else {
-          html += `<div class="cal-event cal-event-inicio" onclick="verOportunidad('${ev.row.id}')" title="Inicio: ${ev.row.nombre || ''}">
-            <span class="cal-event-text">${ev.row.nombre || '—'}</span>
+          html += `<div class="cal-event cal-event-inicio" onclick="verOportunidad('${ev.row.id}')" title="Inicio: ${escapeHtml(ev.row.nombre || '')}">
+            <span class="cal-event-text">${escapeHtml(ev.row.nombre) || '—'}</span>
           </div>`;
         }
       });
@@ -952,10 +980,10 @@ function renderPerfil() {
   const perfBadge = s.perfil === 'admin' ? 'badge-admin' : 'badge-usuario';
   document.getElementById('perfilInfo').innerHTML =
     `<div style="display:flex;align-items:center;gap:16px;margin-bottom:24px">
-      <div style="width:56px;height:56px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;flex-shrink:0">${s.nombre.split(' ').map(n => n[0]).slice(0, 2).join('')}</div>
-      <div><div style="font-size:16px;font-weight:700">${s.nombre}</div><div style="font-size:12px;color:var(--text-muted);margin-top:2px">${s.email}</div></div>
+      <div style="width:56px;height:56px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;flex-shrink:0">${escapeHtml(s.nombre.split(' ').map(n => n[0]).slice(0, 2).join(''))}</div>
+      <div><div style="font-size:16px;font-weight:700">${escapeHtml(s.nombre)}</div><div style="font-size:12px;color:var(--text-muted);margin-top:2px">${escapeHtml(s.email)}</div></div>
     </div>
-    ${infoRow('Perfil', `<span class="badge ${perfBadge}">${s.perfil}</span>`)}
+    ${infoRow('Perfil', `<span class="badge ${perfBadge}">${escapeHtml(s.perfil)}</span>`)}
     ${infoRow('Estado', '<span class="badge badge-activa">Activo</span>')}`;
   updateThemeUI();
 }
@@ -1014,9 +1042,9 @@ async function loadUsuarios() {
   document.getElementById('usuariosTable').style.display = 'block';
   document.getElementById('usuariosBody').innerHTML = _allUsers.map(u => `
     <tr>
-      <td style="font-weight:600">${u.nombre}</td>
-      <td style="color:var(--text-muted);font-size:12px">${u.email}</td>
-      <td><span class="badge ${u.perfil === 'admin' ? 'badge-admin' : 'badge-usuario'}">${u.perfil}</span></td>
+      <td style="font-weight:600">${escapeHtml(u.nombre)}</td>
+      <td style="color:var(--text-muted);font-size:12px">${escapeHtml(u.email)}</td>
+      <td><span class="badge ${u.perfil === 'admin' ? 'badge-admin' : 'badge-usuario'}">${escapeHtml(u.perfil)}</span></td>
       <td><span class="badge ${u.activo ? 'badge-activa' : 'badge-cerrada'}">${u.activo ? 'Activo' : 'Inactivo'}</span></td>
       <td style="text-align:center"><button class="btn-sm" onclick="openUserModal('edit','${u.uid}')">Editar</button></td>
     </tr>`).join('');
@@ -1063,7 +1091,7 @@ async function handleUserModalSubmit(e) {
   try {
     if (mode === 'new') {
       const pass = document.getElementById('um_pass').value;
-      if (pass.length < 6) { showModalAlert('La contraseña debe tener al menos 6 caracteres.'); return; }
+      if (pass.length < 6) { showModalAlert('La contraseña debe tener al menos 6 caracteres.'); btn.disabled = false; btn.textContent = 'Crear Usuario'; return; }
       const result = await AUTH.addUser({
         nombre:     document.getElementById('um_nombre').value,
         usuario:    document.getElementById('um_email').value.split('@')[0],
@@ -1084,11 +1112,8 @@ async function handleUserModalSubmit(e) {
       };
       const newPass = document.getElementById('um_passReset').value;
       if (newPass) {
-        if (newPass.length < 6) { showModalAlert('La contraseña debe tener al menos 6 caracteres.'); return; }
-        // Actualizar contrasena via Firebase Auth
-        const user = firebase.auth().currentUser;
-        // Para admin cambiando contrasena de otro, necesitamos Cloud Functions
-        // Por ahora, actualizamos solo el perfil
+        if (newPass.length < 6) { showModalAlert('La contraseña debe tener al menos 6 caracteres.'); btn.disabled = false; btn.textContent = 'Guardar Cambios'; return; }
+        data.contrasena = newPass;
       }
       const ok = await AUTH.updateUser(uid, data);
       if (ok) { TOAST.success('Usuario actualizado correctamente.'); closeUserModal(); loadUsuarios(); }
@@ -1233,7 +1258,7 @@ function renderImportPreview(fileName, headers, rows) {
   const headRow = document.getElementById('importPreviewHead');
   const matchedCols = headers.filter(h => IMPORT_MAP[h]);
   headRow.innerHTML = '<tr>' + matchedCols.map(h =>
-    `<th>${h}${IMPORT_MAP[h] ? '' : ''}</th>`
+    `<th>${escapeHtml(h)}</th>`
   ).join('') + '</tr>';
 
   // Show first 10 rows
@@ -1243,7 +1268,7 @@ function renderImportPreview(fileName, headers, rows) {
     '<tr>' + matchedCols.map(h => {
       const val = row[h] !== undefined ? row[h] : '';
       const isMissing = !val && h === 'Nombre de la Oportunidad';
-      return `<td style="${isMissing ? 'color:#f87171;font-weight:600' : ''}">${val || '—'}</td>`;
+      return `<td style="${isMissing ? 'color:#f87171;font-weight:600' : ''}">${escapeHtml(val) || '—'}</td>`;
     }).join('') + '</tr>'
   ).join('');
 
@@ -1366,7 +1391,7 @@ async function initKanban() {
     filters.style.display = 'flex';
     const resps = [...new Set(_kanbanRows.map(r => r.responsable).filter(Boolean))].sort();
     selR.innerHTML = '<option value="">Todos los responsables</option>';
-    resps.forEach(r => selR.innerHTML += `<option>${r}</option>`);
+    resps.forEach(r => selR.innerHTML += `<option>${escapeHtml(r)}</option>`);
   } else {
     filters.style.display = 'flex';
     selR.style.display = 'none';
@@ -1394,15 +1419,15 @@ function renderKanban() {
     const color = CRM.ESTADO_COLORS[estado];
     const cards = rows.filter(r => r.estado === estado);
     return `
-      <div class="kanban-col" data-estado="${estado}">
+      <div class="kanban-col" data-estado="${escapeHtml(estado)}">
         <div class="kanban-col-header">
           <div class="kanban-col-title">
             <div class="kanban-col-dot" style="background:${color}"></div>
-            ${estado}
+            ${escapeHtml(estado)}
             <span class="kanban-col-count">${cards.length}</span>
           </div>
         </div>
-        <div class="kanban-col-body" data-estado="${estado}">
+        <div class="kanban-col-body" data-estado="${escapeHtml(estado)}">
           ${cards.length === 0 ? '<div class="kanban-col-empty">Sin oportunidades</div>' :
             cards.map(r => renderKanbanCard(r)).join('')}
         </div>
@@ -1438,14 +1463,14 @@ function renderKanban() {
 
 function renderKanbanCard(r) {
   const color = CRM.ESTADO_COLORS[r.estado] || 'var(--border)';
-  const tcvDisplay = r.tcv ? Number(r.tcv).toLocaleString('es-AR') + (r.currency ? ' ' + r.currency : '') : '—';
+  const tcvDisplay = r.tcv ? Number(r.tcv).toLocaleString('es-AR') + (r.currency ? ' ' + escapeHtml(r.currency) : '') : '—';
   return `
-    <div class="kanban-card" draggable="true" data-id="${r.id}" data-estado="${r.estado}" style="border-left-color:${color}">
-      <div class="kanban-card-id">${friendlyId(r)}</div>
-      <div class="kanban-card-client">${r.cliente || '—'}</div>
-      <div class="kanban-card-name">${r.nombre || '—'}</div>
+    <div class="kanban-card" draggable="true" data-id="${r.id}" data-estado="${escapeHtml(r.estado)}" style="border-left-color:${color}">
+      <div class="kanban-card-id">${escapeHtml(friendlyId(r))}</div>
+      <div class="kanban-card-client">${escapeHtml(r.cliente) || '—'}</div>
+      <div class="kanban-card-name">${escapeHtml(r.nombre) || '—'}</div>
       <div class="kanban-card-meta">
-        <span>${r.responsable || '—'}</span>
+        <span>${escapeHtml(r.responsable) || '—'}</span>
         <span class="kanban-card-tcv">${tcvDisplay}</span>
       </div>
     </div>`;
