@@ -245,8 +245,8 @@ body.dark-mode .btn-sm { color: var(--text); border-color: var(--border); }
 .badge-entregada  { background:rgba(219,234,254,0.75);backdrop-filter:blur(4px);color:#1e40af; }
 .badge-finalizada { background:rgba(220,252,231,0.75);backdrop-filter:blur(4px);color:#166534; }
 .badge-pausa      { background:rgba(254,231,179,0.75);backdrop-filter:blur(4px);color:#9a3412; }
-.badge-perdido    { background:rgba(239,68,68,0.15);backdrop-filter:blur(4px);color:#dc2626;border:1px solid rgba(239,68,68,0.3); }
-.badge-ganado     { background:rgba(22,163,74,0.15);backdrop-filter:blur(4px);color:#15803d;border:1px solid rgba(22,163,74,0.3); }
+.badge-perdido    { background:rgba(254,202,202,0.85);backdrop-filter:blur(4px);color:#991b1b;border:1px solid rgba(239,68,68,0.4); }
+.badge-ganado     { background:rgba(187,247,208,0.85);backdrop-filter:blur(4px);color:#065f46;border:1px solid rgba(22,163,74,0.4); }
 /* ── Perfil de Usuario ── */
 .badge-admin   { background:rgba(233,213,255,0.75);backdrop-filter:blur(4px);color:#6b21a8; }
 .badge-usuario { background:rgba(224,231,255,0.75);backdrop-filter:blur(4px);color:#3730a3; }
@@ -258,8 +258,8 @@ body.dark-mode .badge-desarrollo { background:rgba(113,63,18,0.5); color:#fde68a
 body.dark-mode .badge-entregada  { background:rgba(30,58,138,0.5); color:#93c5fd; }
 body.dark-mode .badge-finalizada { background:rgba(22,101,52,0.5); color:#86efac; }
 body.dark-mode .badge-pausa      { background:rgba(154,52,18,0.5); color:#fdba74; }
-body.dark-mode .badge-perdido    { background:rgba(127,29,29,0.5); color:#fca5a5; }
-body.dark-mode .badge-ganado     { background:rgba(6,95,70,0.5); color:#a7f3d0; }
+body.dark-mode .badge-perdido    { background:rgba(153,27,27,0.55); color:#fecaca; border-color:rgba(239,68,68,0.4); }
+body.dark-mode .badge-ganado     { background:rgba(6,78,59,0.55); color:#bbf7d0; border-color:rgba(22,163,74,0.4); }
 body.dark-mode .badge-admin      { background:rgba(107,33,168,0.4); color:#e9d5ff; }
 body.dark-mode .badge-usuario    { background:rgba(55,48,163,0.4); color:#c7d2fe; }
 body.dark-mode .badge-activa     { background:rgba(22,101,52,0.5); color:#86efac; }
