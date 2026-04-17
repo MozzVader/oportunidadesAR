@@ -134,7 +134,7 @@ function friendlyId(r) {
 function canEdit(r) {
   const s = AUTH.getSession();
   if (!s) return false;
-  return s.perfil === 'admin' || r.responsableUid === s.uid;
+  return s.perfil === 'admin' || r.responsable === s.nombre;
 }
 
 function badgeEstado(e) {
@@ -448,7 +448,7 @@ function doModSearch() {
   const q = document.getElementById('modSearchInput').value.trim().toLowerCase();
   const session = AUTH.getSession();
   let rows = _modRows;
-  if (session && session.perfil !== 'admin') rows = rows.filter(r => r.responsableUid === session.uid);
+  if (session && session.perfil !== 'admin') rows = rows.filter(r => r.responsable === session.nombre);
   const filtered = q
     ? rows.filter(r => (r.cliente || '').toLowerCase().includes(q) || (r.nombre || '').toLowerCase().includes(q) || (r.codigo || '').toLowerCase().includes(q))
     : rows.slice(0, 20);
@@ -468,7 +468,7 @@ async function loadModItem(id) {
   if (!r) r = await CRM.getOportunidad(id);
   if (!r) return;
   const session = AUTH.getSession();
-  if (session && session.perfil !== 'admin' && r.responsableUid !== session.uid) {
+  if (session && session.perfil !== 'admin' && r.responsable !== session.nombre) {
     alert('Solo podés editar oportunidades que te pertenecen.');
     return;
   }
@@ -1233,7 +1233,7 @@ async function initKanban() {
 
   const session = AUTH.getSession();
   const raw = await CRM.getData();
-  _kanbanRows = session.perfil === 'admin' ? raw : raw.filter(r => r.responsableUid === session.uid);
+  _kanbanRows = session.perfil === 'admin' ? raw : raw.filter(r => r.responsable === session.nombre);
 
   // Populate responsables filter (admin only)
   const selR = document.getElementById('k_responsable');
@@ -1366,7 +1366,7 @@ async function handleKanbanDrop(id, newEstado) {
 
   // Check edit permissions
   const session = AUTH.getSession();
-  if (session.perfil !== 'admin' && r.responsableUid !== session.uid) {
+  if (session.perfil !== 'admin' && r.responsable !== session.nombre) {
     TOAST.error('No tenés permisos para mover esta oportunidad.');
     return;
   }
@@ -1380,7 +1380,7 @@ async function handleKanbanDrop(id, newEstado) {
     TOAST.success(`"${r.nombre}" → ${newEstado}`);
     // Refresh data in background
     const fresh = await CRM.getData();
-    _kanbanRows = session.perfil === 'admin' ? fresh : fresh.filter(x => x.responsableUid === session.uid);
+    _kanbanRows = session.perfil === 'admin' ? fresh : fresh.filter(x => x.responsable === session.nombre);
     renderKanban();
   } catch(err) {
     // Rollback on error
@@ -1400,7 +1400,7 @@ async function initMis() {
   document.getElementById('misTable').style.display = 'none';
   const session = AUTH.getSession();
   const raw = await CRM.getData();
-  _misRows = raw.filter(r => r.responsableUid === session.uid);
+  _misRows = raw.filter(r => r.responsable === session.nombre);
   document.getElementById('misLoading').style.display = 'none';
   document.getElementById('misTable').style.display = 'block';
   _misPage = 1;
