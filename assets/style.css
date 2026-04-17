@@ -245,8 +245,8 @@ body.dark-mode .btn-sm { color: var(--text); border-color: var(--border); }
 .badge-entregada  { background:rgba(219,234,254,0.75);backdrop-filter:blur(4px);color:#1e40af; }
 .badge-finalizada { background:rgba(220,252,231,0.75);backdrop-filter:blur(4px);color:#166534; }
 .badge-pausa      { background:rgba(254,231,179,0.75);backdrop-filter:blur(4px);color:#9a3412; }
-.badge-perdido    { background:rgba(254,226,226,0.75);backdrop-filter:blur(4px);color:#991b1b; }
-.badge-ganado     { background:rgba(167,243,208,0.75);backdrop-filter:blur(4px);color:#065f46; }
+.badge-perdido    { background:rgba(239,68,68,0.15);backdrop-filter:blur(4px);color:#dc2626;border:1px solid rgba(239,68,68,0.3); }
+.badge-ganado     { background:rgba(22,163,74,0.15);backdrop-filter:blur(4px);color:#15803d;border:1px solid rgba(22,163,74,0.3); }
 /* ── Perfil de Usuario ── */
 .badge-admin   { background:rgba(233,213,255,0.75);backdrop-filter:blur(4px);color:#6b21a8; }
 .badge-usuario { background:rgba(224,231,255,0.75);backdrop-filter:blur(4px);color:#3730a3; }
