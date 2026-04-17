@@ -1472,6 +1472,14 @@ function initApp() {
   document.getElementById('userPerfil').textContent = session.perfil;
   if (session.perfil === 'admin') document.getElementById('btnUsuarios').style.display = 'flex';
 
+  // Ocultar secciones para "solo lectura"
+  if (session.perfil === 'solo lectura') {
+    document.getElementById('btnNueva').style.display = 'none';
+    document.getElementById('btnModificar').style.display = 'none';
+    document.getElementById('btnMis').style.display = 'none';
+    document.querySelectorAll('.btn-nueva-oport').forEach(b => b.style.display = 'none');
+  }
+
   // Sidebar toggle
   document.getElementById('toggleBtn').addEventListener('click', () =>
     document.getElementById('sidebar').classList.toggle('collapsed')
