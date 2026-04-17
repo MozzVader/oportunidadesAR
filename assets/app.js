@@ -378,22 +378,26 @@ function parseLocalizedNumber(val) {
   let s = String(val).trim();
   // Quitar símbolo % si el usuario lo escribió
   if (s.endsWith('%')) s = s.slice(0, -1).trim();
-  // Si ya es un número válido, devolverlo directamente
-  if (!isNaN(Number(s)) && s.indexOf('.') <= 1) return Number(s);
-  // Detectar formato argentino: tiene última coma seguida de exactamente 2 dígitos (posible decimal)
-  // Ej: "1.234.567,89" → "1234567.89"
-  const lastComma = s.lastIndexOf(',');
-  const lastDot = s.lastIndexOf('.');
-  // Si la coma está después del último punto: formato argentino (puntos=miles, coma=decimal)
-  if (lastComma > lastDot) {
-    const cleaned = s.replace(/\./g, '').replace(',', '.');
-    return Number(cleaned);
+  if (s === '') return NaN;
+
+  const dotCount   = (s.match(/\./g) || []).length;
+  const commaCount = (s.match(/,/g) || []).length;
+
+  // Sin separadores: número plano "1500000"
+  if (dotCount === 0 && commaCount === 0) return Number(s);
+
+  // Un solo punto sin comas: decimal estándar "1.5"
+  if (dotCount === 1 && commaCount === 0) return Number(s);
+
+  // Formato argentino (puntos=miles, coma=decimal):
+  //   "1.500.000"      → 1500000
+  //   "1.500.000,89"   → 1500000.89
+  //   "1500,50"        → 1500.50
+  if (dotCount > 1 || commaCount > 0) {
+    return Number(s.replace(/\./g, '').replace(',', '.'));
   }
-  // Si solo tiene comas sin puntos: "1234,56" → "1234.56"
-  if (lastComma >= 0 && lastDot < 0) {
-    return Number(s.replace(',', '.'));
-  }
-  // Formato estándar o ya sin separadores
+
+  // Fallback: formato US (comas=miles, punto=decimal)
   return Number(s.replace(/,/g, ''));
 }
 
@@ -542,28 +546,45 @@ async function openEditModal(id) {
   document.getElementById('e_tcv').value          = r.tcv || '';
   document.getElementById('e_currency').value     = r.currency || '';
   document.getElementById('e_pm').value           = r.pm || '';
-  document.getElementById('e_tipoCambio').value   = r.tipoCambio || '';
-  document.getElementById('e_tcvEur').value       = r.tcvEur || '';
   document.getElementById('e_probabilidad').value = r.probabilidad || '';
-  _fxRates['e'] = parseFloat(r.tipoCambio) || null;
 
-  const eur = parseFloat(r.tcvEur);
+  // Manejar tipoCambio y tcvEur: 0 significa "nunca calculado", no "cero"
+  const savedRate = (r.tipoCambio && r.tipoCambio !== 0) ? parseFloat(r.tipoCambio) : null;
+  const savedEur  = (r.tcvEur && r.tcvEur !== 0) ? parseFloat(r.tcvEur) : 0;
+  document.getElementById('e_tipoCambio').value = savedRate ? savedRate.toFixed(6) : '';
+  document.getElementById('e_tcvEur').value     = savedEur ? savedEur.toFixed(2) : '';
+  _fxRates['e'] = savedRate;
+
   const tv = document.getElementById('e_tcvEurValue');
-  if (eur) { tv.className = ''; tv.textContent = '€ ' + eur.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
-  else { tv.className = 'fx-loading'; tv.textContent = '—'; }
+  const eurContainer = tv ? tv.parentElement : null;
+  if (savedEur) {
+    tv.className = '';
+    tv.textContent = '€ ' + savedEur.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (eurContainer) eurContainer.style.borderColor = 'var(--accent)';
+  } else {
+    tv.className = 'fx-loading';
+    tv.textContent = '—';
+    if (eurContainer) eurContainer.style.borderColor = 'var(--border)';
+  }
 
   const badge = document.getElementById('e_fxBadge');
-  if (r.tipoCambio && r.currency) {
+  if (savedRate && r.currency) {
     badge.style.display = 'inline-flex';
-    badge.textContent = `1 ${r.currency} = ${parseFloat(r.tipoCambio).toFixed(4)} EUR`;
+    badge.textContent = `1 ${r.currency} = ${savedRate.toFixed(4)} EUR`;
   } else {
     badge.style.display = 'none';
   }
+
   document.getElementById('e_btnDelete').style.display = session && session.perfil === 'admin' ? '' : 'none';
   if (session && session.perfil !== 'admin') document.getElementById('e_responsable').readOnly = true;
   else document.getElementById('e_responsable').readOnly = false;
 
   document.getElementById('editModalOverlay').classList.add('open');
+
+  // Si tiene currency pero no tiene tipo de cambio, buscarlo automáticamente
+  if (r.currency && r.currency !== 'EUR' && !savedRate) {
+    fetchFX('e');
+  }
 }
 
 function closeEditModal(event) {

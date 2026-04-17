@@ -173,8 +173,8 @@ h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 .form-group { display: flex; flex-direction: column; gap: 6px; }
 .form-group.full { grid-column: 1/-1; }
-.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; }
-.two-col-form { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; align-items: end; }
+.two-col-form { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: end; }
 label { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
 input, select, textarea {
   font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 500;
@@ -389,9 +389,10 @@ body.dark-mode .kanban-card { background:#1e1c24;border-color:#2a2832; }
   border-radius:var(--radius-sm);
   padding:10px 14px;
   font-size:13px;font-weight:600;color:var(--text);
-  min-height:42px;
+  min-height:40px;
   width:100%;
   transition: border-color 0.2s, box-shadow 0.2s;
+  line-height:1.4;
 }
 body.dark-mode .fx-display {
   background:rgba(30, 30, 28, 0.7);
