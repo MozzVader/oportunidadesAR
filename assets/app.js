@@ -680,7 +680,7 @@ function editFromTabla(id) {
 }
 
 function verOportunidad(id) {
-  let r = _tablaRows.find(x => x.id === id) || _kanbanRows.find(x => x.id === id);
+  let r = _tablaRows.find(x => x.id === id) || _kanbanRows.find(x => x.id === id) || _calRows.find(x => x.id === id);
   if (!r) return;
 
   document.getElementById('verModalId').textContent = friendlyId(r);
