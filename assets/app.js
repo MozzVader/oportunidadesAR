@@ -241,7 +241,7 @@ const TOAST = (() => {
 const PAGE_TITLES = {
   home: 'Inicio', nueva: 'Nueva Oportunidad', modificar: 'Modificar Oportunidad',
   mis: 'Mis Oportunidades', todas: 'Ver Todas', kanban: 'Kanban',
-  estadisticas: 'Estadísticas', perfil: 'Mi Perfil', usuarios: 'Administración'
+  estadisticas: 'Estadísticas', perfil: 'Mi Perfil', log: 'Log de Eventos', usuarios: 'Administración'
 };
 
 function navigate(btn) {
@@ -262,6 +262,7 @@ function onPageEnter(page) {
   else if (page === 'estadisticas') renderStats();
   else if (page === 'modificar')    initModSearch();
   else if (page === 'perfil')       renderPerfil();
+  else if (page === 'log')          initLog();
   else if (page === 'usuarios')     loadUsuarios();
 }
 
@@ -410,6 +411,7 @@ async function handleNueva(e) {
       probabilidad: document.getElementById('n_probabilidad').value || '',
       pm:           document.getElementById('n_pm').value || ''
     });
+    CRM.logEvento('creacion', 'Creó la oportunidad', id, '', document.getElementById('n_nombre').value);
     TOAST.success('Oportunidad guardada exitosamente.');
     resetNueva();
   } catch(err) {
@@ -519,6 +521,10 @@ function backToModSearch() {
   _fxRates['e'] = null;
 }
 
+  // Capturar estado viejo antes de actualizar
+  const opp = _tablaRows.find(r => r.id === id) || _modRows.find(r => r.id === id) || {};
+  const oldEstado = opp.estado || '';
+  const newEstado = document.getElementById('e_estado').value;
 async function handleUpdate(e) {
   e.preventDefault();
   const id  = document.getElementById('e_id').value;
@@ -545,6 +551,13 @@ async function handleUpdate(e) {
       probabilidad: document.getElementById('e_probabilidad').value || '',
       pm:           document.getElementById('e_pm').value || ''
     });
+
+    // Log del evento
+    if (oldEstado && newEstado && oldEstado !== newEstado) {
+      CRM.logEvento('cambio_estado', `Cambio estado: ${oldEstado} → ${newEstado}`, id, opp.codigo, opp.nombre);
+    } else {
+      CRM.logEvento('edicion', 'Editó la oportunidad', id, opp.codigo, opp.nombre);
+    }
     TOAST.success('Oportunidad actualizada correctamente.');
     backToModSearch();
     CRM.invalidateCache();
@@ -561,9 +574,11 @@ async function handleUpdate(e) {
 async function handleDelete() {
   const id   = document.getElementById('e_id').value;
   const name = document.getElementById('modEditTitle').textContent;
+  const oppDel = _tablaRows.find(r => r.id === id) || _modRows.find(r => r.id === id) || {};
   if (!confirm(`¿Seguro que querés eliminar "${name}"?`)) return;
   try {
     await CRM.deleteOportunidad(id);
+    CRM.logEvento('eliminacion', 'Eliminó la oportunidad', id, oppDel.codigo, oppDel.nombre);
     TOAST.success('Oportunidad eliminada.');
     backToModSearch();
     CRM.invalidateCache();
@@ -1181,6 +1196,7 @@ async function executeImport() {
 
     try {
       await CRM.addOportunidad(data);
+      CRM.logEvento('creacion', 'Importó oportunidad masivamente', '', '', data.nombre);
       ok++;
     } catch(err) {
       fail++;
@@ -1382,6 +1398,7 @@ async function handleKanbanDrop(id, newEstado) {
 
   try {
     await CRM.updateOportunidad(id, { estado: newEstado });
+    CRM.logEvento('cambio_estado', `Cambio estado: ${oldEstado} → ${newEstado}`, id, r.codigo, r.nombre);
     TOAST.success(`"${r.nombre}" → ${newEstado}`);
     // Refresh data in background
     const fresh = await CRM.getData();
@@ -1460,6 +1477,87 @@ function renderMis(page) {
 }
 
 // ══════════════════════════════════════════════
+// LOG DE EVENTOS
+// ══════════════════════════════════════════════
+function timeAgo(dateStr) {
+  const now = new Date();
+  const date = new Date(dateStr);
+  const diffMs = now - date;
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return 'Ahora mismo';
+  if (diffMin < 60) return `Hace ${diffMin} min`;
+  const diffHrs = Math.floor(diffMin / 60);
+  if (diffHrs < 24) return `Hace ${diffHrs}h`;
+  const diffDays = Math.floor(diffHrs / 24);
+  if (diffDays < 7) return `Hace ${diffDays}d`;
+  return date.toLocaleDateString('es-AR', { day: '2-digit', month: 'short' });
+}
+
+const ACCION_STYLES = {
+  creacion:      { icon: '➕', color: '#22c55e', label: 'Creación' },
+  edicion:       { icon: '✏️', color: '#3b82f6', label: 'Edición' },
+  eliminacion:   { icon: '🗑️', color: '#ef4444', label: 'Eliminación' },
+  cambio_estado: { icon: '🔄', color: '#f59e0b', label: 'Cambio de estado' }
+};
+
+async function initLog() {
+  const loading = document.getElementById('logLoading');
+  const feed    = document.getElementById('logFeed');
+  const empty   = document.getElementById('logEmpty');
+  loading.style.display = 'flex';
+  feed.style.display = 'none';
+  empty.style.display = 'none';
+
+  const events = await CRM.getLogEventos(150);
+  loading.style.display = 'none';
+
+  if (events.length === 0) { empty.style.display = 'block'; return; }
+
+  // Agrupar por fecha
+  const groups = {};
+  events.forEach(ev => {
+    const d = new Date(ev.fecha);
+    const dayKey = d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
+    if (!groups[dayKey]) groups[dayKey] = [];
+    groups[dayKey].push(ev);
+  });
+
+  let html = '';
+  Object.entries(groups).forEach(([dayLabel, dayEvents]) => {
+    html += `<div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin:24px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--border)">${dayLabel}</div>`;
+    dayEvents.forEach(ev => {
+      const style = ACCION_STYLES[ev.accion] || ACCION_STYLES.edicion;
+      const oppLink = ev.oppId ? `<span style="color:var(--accent);font-weight:600;cursor:pointer" onclick="verOportunidadLog('${ev.oppId}')">${ev.oppCodigo || ev.oppNombre || ev.oppId.substring(0,8)}</span>` : '';
+      html += `
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid color-mix(in srgb, var(--border) 50%, transparent)">
+          <div style="width:32px;height:32px;border-radius:8px;background:color-mix(in srgb, ${style.color} 12%, transparent);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">${style.icon}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:500;color:var(--text);line-height:1.4">
+              <span style="font-weight:600">${ev.usuario || 'Usuario'}</span>
+              ${ev.detalle}
+              ${oppLink}
+            </div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;display:flex;align-items:center;gap:8px">
+              <span style="background:color-mix(in srgb, ${style.color} 15%, transparent);color:${style.color};padding:1px 8px;border-radius:10px;font-weight:600;font-size:10px">${style.label}</span>
+              <span>${timeAgo(ev.fecha)}</span>
+            </div>
+          </div>
+        </div>`;
+    });
+  });
+
+  feed.innerHTML = html;
+  feed.style.display = 'block';
+}
+
+function verOportunidadLog(id) {
+  // Navegar a modificar y abrir la oportunidad
+  const modBtn = document.querySelector('[data-page=modificar]');
+  if (modBtn) navigate(modBtn);
+  setTimeout(() => editFromTabla(id), 300);
+}
+
+// ══════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════
 function initApp() {
@@ -1472,6 +1570,7 @@ function initApp() {
   document.getElementById('userName').textContent   = session.nombre.split(' ').slice(0, 2).join(' ');
   document.getElementById('userPerfil').textContent = session.perfil;
   if (session.perfil === 'admin') document.getElementById('btnUsuarios').style.display = 'flex';
+  if (session.perfil === 'admin') document.getElementById('btnLog').style.display = 'flex';
 
   // Ocultar secciones para "solo lectura"
   if (session.perfil === 'solo lectura') {

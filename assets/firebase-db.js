@@ -268,8 +268,41 @@ function downloadExcel(rows) {
   }
 }
 
+// ── LOG DE EVENTOS ──
+async function logEvento(accion, detalle, oppId, oppCodigo, oppNombre) {
+  try {
+    const session = AUTH.getSession();
+    await firebase.firestore().collection('log_eventos').add({
+      fecha:      new Date().toISOString(),
+      usuario:    session ? session.nombre : '',
+      usuarioUid: session ? session.uid : '',
+      accion:     accion,     // 'creacion', 'edicion', 'eliminacion', 'cambio_estado'
+      detalle:    detalle,   // descripción legible
+      oppId:      oppId || '',
+      oppCodigo:  oppCodigo || '',
+      oppNombre:  oppNombre || ''
+    });
+  } catch(e) {
+    console.error('Error registrando evento:', e);
+  }
+}
+
+async function getLogEventos(limit = 100) {
+  try {
+    const snap = await firebase.firestore().collection('log_eventos')
+      .orderBy('fecha', 'desc')
+      .limit(limit)
+      .get();
+    return snap.docs.map(d => d.data());
+  } catch(e) {
+    console.error('Error obteniendo log de eventos:', e);
+    return [];
+  }
+}
+
 window.CRM = {
   getData, addOportunidad, updateOportunidad, deleteOportunidad,
   getOportunidad, downloadExcel, onOportunidadesChange, getNextCodigo,
+  logEvento, getLogEventos,
   COLUMNS, ESTADOS, ORIGENES, ESTADO_COLORS, invalidateCache
 };
