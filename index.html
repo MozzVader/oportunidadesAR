@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>PRESALES AR</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-  <link href="assets/style.css?v=6" rel="stylesheet"/>
+  <link href="assets/style.css?v=7" rel="stylesheet"/>
   <!-- External Libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
@@ -46,10 +46,7 @@
         <svg fill="none" viewBox="0 0 18 18" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="9" r="7"/><path d="M9 6v6M6 9h6" stroke-linecap="round"/></svg>
         <span class="nav-label">Nueva Oportunidad</span>
       </button>
-      <button class="nav-item" data-page="modificar" data-tooltip="Modificar" id="btnModificar" onclick="navigate(this)">
-        <svg fill="none" viewBox="0 0 18 18" stroke="currentColor" stroke-width="1.8"><path d="M12 2l4 4-9 9H3v-4L12 2z" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <span class="nav-label">Modificar Oportunidad</span>
-      </button>
+
       <button class="nav-item" data-page="mis" data-tooltip="Mis Oportunidades" id="btnMis" onclick="navigate(this)">
         <svg fill="none" viewBox="0 0 18 18" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="6" r="3"/><path d="M2 16c0-3.9 3.1-7 7-7s7 3.1 7 7" stroke-linecap="round"/><path d="M14 11h2M15 10v2" stroke-linecap="round"/></svg>
         <span class="nav-label">Mis Oportunidades</span>
@@ -194,80 +191,6 @@
               <button type="submit" class="btn btn-primary" id="n_submitBtn">Guardar Oportunidad →</button>
             </div>
           </form>
-        </div>
-      </div>
-
-      <!-- ══ MODIFICAR ══ -->
-      <div class="page-section" id="page-modificar">
-        <h1>Modificar Oportunidad</h1>
-        <p class="subtitle">Buscá y editá una oportunidad existente.</p>
-        <div id="modAlert" class="alert"></div>
-        <div id="modSearch">
-          <div class="search-bar"><input type="text" id="modSearchInput" placeholder="Buscar por cliente, nombre o ID..." oninput="doModSearch()"/></div>
-          <div id="modLoadingSearch" class="loading" style="display:none"><div class="spinner"></div> Cargando...</div>
-          <div class="result-list" id="modResultList"></div>
-          <div id="modEmptySearch" class="empty" style="display:none"><div class="empty-icon">🔍</div><div class="empty-text">Sin resultados</div></div>
-        </div>
-        <div id="modEditForm" style="display:none">
-          <div class="page-actions">
-            <div>
-              <div style="font-size:11px;color:var(--text-muted);font-weight:600;letter-spacing:0.05em;text-transform:uppercase">Editando oportunidad</div>
-              <div style="font-size:18px;font-weight:700;margin-top:2px" id="modEditTitle">—</div>
-            </div>
-            <button class="btn btn-ghost" onclick="backToModSearch()">← Volver</button>
-          </div>
-          <div class="card">
-            <form id="modForm" onsubmit="handleUpdate(event)">
-              <input type="hidden" id="e_id"/>
-              <div class="section-block">
-                <div class="section-title">Información General</div>
-                <div class="three-col" style="margin-bottom:18px">
-                  <div class="form-group"><label>Cliente *</label><input type="text" id="e_cliente" required/></div>
-                  <div class="form-group"><label>Industria</label><select id="e_industria"><option value="">— Seleccionar —</option><option>Agroindustria</option><option>Alimenticia</option><option>Automotriz</option><option>eCommerce</option><option>Energía</option><option>Industria/Tecnología</option><option>Medios</option><option>Oil&amp;Gas</option><option>Retail</option><option>Salud</option><option>Sector Público</option><option>Seguros</option><option>Servicios Financieros</option><option>Telecomunicaciones</option><option>Transporte y Logística</option></select></div>
-                  <div class="form-group"><label>Práctica / Área *</label><select id="e_practica" required><option value="">— Seleccionar —</option><option>AM</option><option>CES</option><option>Consultoría</option><option>DWP</option><option>Enablon</option><option>HCI</option><option>IA</option><option>SAP</option><option>Testing</option></select></div>
-                </div>
-                <div class="form-group" style="margin-bottom:18px"><label>Nombre de la Oportunidad *</label><input type="text" id="e_nombre" required/></div>
-                <div class="form-group" style="margin-bottom:18px"><label>Descripción</label><textarea id="e_descripcion"></textarea></div>
-                <div class="form-group"><label>Origen *</label><select id="e_origen" required><option value="">— Seleccionar —</option><option>Fertilización</option><option>Otro</option><option>Proyecto</option><option>Renovación</option><option>RFP</option></select></div>
-              </div>
-              <div class="section-block">
-                <div class="section-title">BID</div>
-                <div class="two-col-form" style="margin-bottom:18px">
-                  <div class="form-group"><label>Responsable *</label><input type="text" id="e_responsable" required/></div>
-                  <div class="form-group"><label>Estado *</label><select id="e_estado" required><option value="">— Seleccionar —</option><option>En Desarrollo</option><option>Entregada</option><option>Finalizada</option><option>Pausa</option><option>No Go</option><option>Cancelada</option><option>Perdida</option><option>Ganada</option></select></div>
-                </div>
-                <div class="two-col-form" style="margin-bottom:18px">
-                  <div class="form-group"><label>Fecha de Inicio *</label><input type="date" id="e_fechaInicio" required/></div>
-                  <div class="form-group"><label>Fecha de Entrega *</label><input type="date" id="e_fechaEntrega" required/></div>
-                </div>
-                <div class="form-group"><label>Notas</label><textarea id="e_notas"></textarea></div>
-              </div>
-              <div class="section-block">
-                <div class="section-title">Datos Comerciales</div>
-                <div class="three-col" style="margin-bottom:18px">
-                  <div class="form-group"><label>TCV</label><input type="number" id="e_tcv" placeholder="0" min="0" oninput="calcFX('e')"/></div>
-                  <div class="form-group"><label>Currency</label><select id="e_currency" onchange="fetchFX('e')"><option value="">— Seleccionar —</option><option>ARS</option><option>CLP</option><option>EUR</option><option>USD</option></select></div>
-                  <div class="form-group"><label>% PM</label><input type="number" id="e_pm" placeholder="0" min="0" max="100" step="0.1"/></div>
-                </div>
-                <div class="two-col-form" style="margin-bottom:18px">
-                  <div class="form-group">
-                    <label>TCV EUR <span id="e_fxBadge" class="fx-badge" style="display:none"></span></label>
-                    <div class="tcv-eur-display"><span id="e_tcvEurValue" class="fx-loading">—</span></div>
-                    <input type="hidden" id="e_tcvEur"/>
-                  </div>
-                  <div class="form-group"><label>Tipo de Cambio</label><input type="number" id="e_tipoCambio" placeholder="—" step="0.0001" oninput="calcFX('e')" readonly style="color:var(--text-muted)"/></div>
-                </div>
-                <div class="form-group" style="max-width:200px"><label>% Probabilidad</label><input type="number" id="e_probabilidad" placeholder="0" min="0" max="100" step="1"/></div>
-              </div>
-              <div style="display:flex;gap:12px;justify-content:space-between;flex-wrap:wrap">
-                <button type="button" class="btn btn-danger" id="e_btnDelete" onclick="handleDelete()">🗑 Eliminar</button>
-                <div style="display:flex;gap:12px">
-                  <button type="button" class="btn btn-ghost" onclick="backToModSearch()">Cancelar</button>
-                  <button type="submit" class="btn btn-primary" id="e_submitBtn">Guardar Cambios →</button>
-                </div>
-              </div>
-            </form>
-          </div>
         </div>
       </div>
 
@@ -519,6 +442,71 @@
   </div>
 </div>
 
+<!-- MODAL EDITAR OPORTUNIDAD -->
+<div class="modal-overlay" id="editModalOverlay" onclick="closeEditModal(event)">
+  <div class="modal modal-wide" onclick="event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div>
+        <div style="font-size:11px;color:var(--text-muted);font-weight:600;letter-spacing:0.05em;text-transform:uppercase">Editar Oportunidad</div>
+        <div style="font-size:18px;font-weight:700;margin-top:2px" id="editModalTitle">—</div>
+      </div>
+      <button onclick="closeEditModal()" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:20px;padding:4px;line-height:1">✕</button>
+    </div>
+    <div class="edit-modal-scroll">
+      <form id="editForm" onsubmit="handleUpdate(event)">
+        <input type="hidden" id="e_id"/>
+        <div class="section-block">
+          <div class="section-title">Información General</div>
+          <div class="three-col" style="margin-bottom:18px">
+            <div class="form-group"><label>Cliente *</label><input type="text" id="e_cliente" required/></div>
+            <div class="form-group"><label>Industria</label><select id="e_industria"><option value="">— Seleccionar —</option><option>Agroindustria</option><option>Alimenticia</option><option>Automotriz</option><option>eCommerce</option><option>Energía</option><option>Industria/Tecnología</option><option>Medios</option><option>Oil&amp;Gas</option><option>Retail</option><option>Salud</option><option>Sector Público</option><option>Seguros</option><option>Servicios Financieros</option><option>Telecomunicaciones</option><option>Transporte y Logística</option></select></div>
+            <div class="form-group"><label>Práctica / Área *</label><select id="e_practica" required><option value="">— Seleccionar —</option><option>AM</option><option>CES</option><option>Consultoría</option><option>DWP</option><option>Enablon</option><option>HCI</option><option>IA</option><option>SAP</option><option>Testing</option></select></div>
+          </div>
+          <div class="form-group" style="margin-bottom:18px"><label>Nombre de la Oportunidad *</label><input type="text" id="e_nombre" required/></div>
+          <div class="form-group" style="margin-bottom:18px"><label>Descripción</label><textarea id="e_descripcion"></textarea></div>
+          <div class="form-group"><label>Origen *</label><select id="e_origen" required><option value="">— Seleccionar —</option><option>Fertilización</option><option>Otro</option><option>Proyecto</option><option>Renovación</option><option>RFP</option></select></div>
+        </div>
+        <div class="section-block">
+          <div class="section-title">BID</div>
+          <div class="two-col-form" style="margin-bottom:18px">
+            <div class="form-group"><label>Responsable *</label><input type="text" id="e_responsable" required/></div>
+            <div class="form-group"><label>Estado *</label><select id="e_estado" required><option value="">— Seleccionar —</option><option>En Desarrollo</option><option>Entregada</option><option>Finalizada</option><option>Pausa</option><option>No Go</option><option>Cancelada</option><option>Perdida</option><option>Ganada</option></select></div>
+          </div>
+          <div class="two-col-form" style="margin-bottom:18px">
+            <div class="form-group"><label>Fecha de Inicio *</label><input type="date" id="e_fechaInicio" required/></div>
+            <div class="form-group"><label>Fecha de Entrega *</label><input type="date" id="e_fechaEntrega" required/></div>
+          </div>
+          <div class="form-group"><label>Notas</label><textarea id="e_notas"></textarea></div>
+        </div>
+        <div class="section-block">
+          <div class="section-title">Datos Comerciales</div>
+          <div class="three-col" style="margin-bottom:18px">
+            <div class="form-group"><label>TCV</label><input type="number" id="e_tcv" placeholder="0" min="0" oninput="calcFX('e')"/></div>
+            <div class="form-group"><label>Currency</label><select id="e_currency" onchange="fetchFX('e')"><option value="">— Seleccionar —</option><option>ARS</option><option>CLP</option><option>EUR</option><option>USD</option></select></div>
+            <div class="form-group"><label>% PM</label><input type="number" id="e_pm" placeholder="0" min="0" max="100" step="0.1"/></div>
+          </div>
+          <div class="two-col-form" style="margin-bottom:18px">
+            <div class="form-group">
+              <label>TCV EUR <span id="e_fxBadge" class="fx-badge" style="display:none"></span></label>
+              <div class="tcv-eur-display"><span id="e_tcvEurValue" class="fx-loading">—</span></div>
+              <input type="hidden" id="e_tcvEur"/>
+            </div>
+            <div class="form-group"><label>Tipo de Cambio</label><input type="number" id="e_tipoCambio" placeholder="—" step="0.0001" oninput="calcFX('e')" readonly style="color:var(--text-muted)"/></div>
+          </div>
+          <div class="form-group" style="max-width:200px"><label>% Probabilidad</label><input type="number" id="e_probabilidad" placeholder="0" min="0" max="100" step="1"/></div>
+        </div>
+        <div style="display:flex;gap:12px;justify-content:space-between;flex-wrap:wrap;padding-top:8px">
+          <button type="button" class="btn btn-danger" id="e_btnDelete" onclick="handleDelete()" style="display:none">🗑 Eliminar</button>
+          <div style="display:flex;gap:12px;margin-left:auto">
+            <button type="button" class="btn btn-ghost" onclick="closeEditModal()">Cancelar</button>
+            <button type="submit" class="btn btn-primary" id="e_submitBtn">Guardar Cambios →</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL USUARIOS -->
 <div class="modal-overlay" id="userModalOverlay">
   <div class="modal">
@@ -615,6 +603,6 @@
 <script src="assets/firebase-auth.js"></script>
 <script src="assets/firebase-db.js"></script>
 <script src="assets/theme.js?v=2"></script>
-<script src="assets/app.js?v=4"></script>
+<script src="assets/app.js?v=5"></script>
 </body>
 </html>

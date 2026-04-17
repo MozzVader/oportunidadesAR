@@ -239,7 +239,7 @@ const TOAST = (() => {
 // NAVIGATION
 // ══════════════════════════════════════════════
 const PAGE_TITLES = {
-  home: 'Inicio', nueva: 'Nueva Oportunidad', modificar: 'Modificar Oportunidad',
+  home: 'Inicio', nueva: 'Nueva Oportunidad',
   mis: 'Mis Oportunidades', todas: 'Ver Todas', kanban: 'Kanban',
   calendario: 'Calendario', estadisticas: 'Estadísticas', perfil: 'Mi Perfil', log: 'Log de Eventos', usuarios: 'Administración'
 };
@@ -261,7 +261,6 @@ function onPageEnter(page) {
   else if (page === 'kanban')       initKanban();
   else if (page === 'calendario')   initCalendario();
   else if (page === 'estadisticas') renderStats();
-  else if (page === 'modificar')    initModSearch();
   else if (page === 'perfil')       renderPerfil();
   else if (page === 'log')          initLog();
   else if (page === 'usuarios')     loadUsuarios();
@@ -435,40 +434,15 @@ function resetNueva() {
 }
 
 // ══════════════════════════════════════════════
-// MODIFICAR OPORTUNIDAD
+// EDITAR OPORTUNIDAD (MODAL)
 // ══════════════════════════════════════════════
-let _modRows = [];
 
-async function initModSearch() {
-  document.getElementById('modSearch').style.display = 'block';
-  document.getElementById('modEditForm').style.display = 'none';
-  document.getElementById('modLoadingSearch').style.display = 'flex';
-  _modRows = await CRM.getData();
-  document.getElementById('modLoadingSearch').style.display = 'none';
-  doModSearch();
+function findRowById(id) {
+  return _tablaRows.find(x => x.id === id) || _kanbanRows.find(x => x.id === id) || _calRows.find(x => x.id === id) || _misRows.find(x => x.id === id) || null;
 }
 
-function doModSearch() {
-  const q = document.getElementById('modSearchInput').value.trim().toLowerCase();
-  const session = AUTH.getSession();
-  let rows = _modRows;
-  if (session && session.perfil !== 'admin') rows = rows.filter(r => r.responsable === session.nombre);
-  const filtered = q
-    ? rows.filter(r => (r.cliente || '').toLowerCase().includes(q) || (r.nombre || '').toLowerCase().includes(q) || (r.codigo || '').toLowerCase().includes(q))
-    : rows.slice(0, 20);
-  const list  = document.getElementById('modResultList');
-  const empty = document.getElementById('modEmptySearch');
-  if (filtered.length === 0) { list.innerHTML = ''; empty.style.display = 'block'; return; }
-  empty.style.display = 'none';
-  list.innerHTML = filtered.slice(0, 20).map(r => `
-    <div class="result-item" onclick="loadModItem('${r.id}')">
-      <div><div class="result-item-name">${r.nombre || '—'}</div><div class="result-item-sub">${r.cliente || '—'} · ${friendlyId(r)}</div></div>
-      <span class="badge ${badgeEstado(r.estado)}">${r.estado || '—'}</span>
-    </div>`).join('');
-}
-
-async function loadModItem(id) {
-  let r = _modRows.find(x => x.id === id);
+async function openEditModal(id) {
+  let r = findRowById(id);
   if (!r) r = await CRM.getOportunidad(id);
   if (!r) return;
   const session = AUTH.getSession();
@@ -477,7 +451,7 @@ async function loadModItem(id) {
     return;
   }
   document.getElementById('e_id').value = id;
-  document.getElementById('modEditTitle').textContent = r.nombre;
+  document.getElementById('editModalTitle').textContent = r.nombre;
   document.getElementById('e_cliente').value      = r.cliente || '';
   document.getElementById('e_industria').value    = r.industria || '';
   document.getElementById('e_practica').value     = r.practica || '';
@@ -502,23 +476,23 @@ async function loadModItem(id) {
   if (eur) { tv.className = ''; tv.textContent = '€ ' + eur.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
   else { tv.className = 'fx-loading'; tv.textContent = '—'; }
 
+  const badge = document.getElementById('e_fxBadge');
   if (r.tipoCambio && r.currency) {
-    const badge = document.getElementById('e_fxBadge');
     badge.style.display = 'inline-flex';
     badge.textContent = `1 ${r.currency} = ${parseFloat(r.tipoCambio).toFixed(4)} EUR`;
+  } else {
+    badge.style.display = 'none';
   }
   document.getElementById('e_btnDelete').style.display = session && session.perfil === 'admin' ? '' : 'none';
   if (session && session.perfil !== 'admin') document.getElementById('e_responsable').readOnly = true;
   else document.getElementById('e_responsable').readOnly = false;
 
-  document.getElementById('modSearch').style.display = 'none';
-  document.getElementById('modEditForm').style.display = 'block';
-  window.scrollTo(0, 0);
+  document.getElementById('editModalOverlay').classList.add('open');
 }
 
-function backToModSearch() {
-  document.getElementById('modSearch').style.display = 'block';
-  document.getElementById('modEditForm').style.display = 'none';
+function closeEditModal(event) {
+  if (event && event.target !== document.getElementById('editModalOverlay')) return;
+  document.getElementById('editModalOverlay').classList.remove('open');
   _fxRates['e'] = null;
 }
 
@@ -528,7 +502,7 @@ async function handleUpdate(e) {
   const btn = document.getElementById('e_submitBtn');
 
   // Capturar estado viejo antes de actualizar
-  const opp = _modRows.find(r => r.id === id) || (_tablaRows.length ? _tablaRows.find(r => r.id === id) : {}) || {};
+  const opp = findRowById(id) || {};
   const oldEstado = opp.estado || '';
   const newEstado = document.getElementById('e_estado').value;
 
@@ -562,10 +536,9 @@ async function handleUpdate(e) {
       CRM.logEvento('edicion', 'Editó la oportunidad', id, opp.codigo, opp.nombre);
     }
     TOAST.success('Oportunidad actualizada correctamente.');
-    backToModSearch();
+    closeEditModal();
     CRM.invalidateCache();
-    _modRows = await CRM.getData();
-    doModSearch();
+    await refreshCurrentPage();
   } catch(err) {
     TOAST.error('Error al actualizar. Intentá de nuevo.');
   } finally {
@@ -576,20 +549,31 @@ async function handleUpdate(e) {
 
 async function handleDelete() {
   const id   = document.getElementById('e_id').value;
-  const name = document.getElementById('modEditTitle').textContent;
-  const oppDel = _tablaRows.find(r => r.id === id) || _modRows.find(r => r.id === id) || {};
+  const name = document.getElementById('editModalTitle').textContent;
+  const oppDel = findRowById(id) || {};
   if (!confirm(`¿Seguro que querés eliminar "${name}"?`)) return;
   try {
     await CRM.deleteOportunidad(id);
     CRM.logEvento('eliminacion', 'Eliminó la oportunidad', id, oppDel.codigo, oppDel.nombre);
     TOAST.success('Oportunidad eliminada.');
-    backToModSearch();
+    closeEditModal();
     CRM.invalidateCache();
-    _modRows = await CRM.getData();
-    doModSearch();
+    await refreshCurrentPage();
   } catch(err) {
     TOAST.error('Error al eliminar.');
   }
+}
+
+async function refreshCurrentPage() {
+  const activePage = document.querySelector('.nav-item.active');
+  if (!activePage) return;
+  const page = activePage.dataset.page;
+  if (page === 'todas') await initTabla();
+  else if (page === 'mis') await initMis();
+  else if (page === 'kanban') await initKanban();
+  else if (page === 'calendario') await initCalendario();
+  else if (page === 'estadisticas') await renderStats();
+  else if (page === 'home') await renderHome();
 }
 
 // ══════════════════════════════════════════════
@@ -675,8 +659,7 @@ function renderTabla(page) {
 }
 
 function editFromTabla(id) {
-  navigate(document.querySelector('[data-page="modificar"]'));
-  setTimeout(() => loadModItem(id), 300);
+  openEditModal(id);
 }
 
 function verOportunidad(id) {
@@ -685,7 +668,7 @@ function verOportunidad(id) {
 
   document.getElementById('verModalId').textContent = friendlyId(r);
   document.getElementById('verModalTitle').textContent = r.nombre || '—';
-  document.getElementById('verModalEditBtn').setAttribute('onclick', `closeVerModal(); editFromTabla('${id}')`);
+  document.getElementById('verModalEditBtn').setAttribute('onclick', `closeVerModal(); openEditModal('${id}')`);
 
   const fmtVal = v => v || '—';
   const fmtEURv = v => v ? '€ ' + parseFloat(v).toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '—';
@@ -1675,10 +1658,7 @@ async function initLog() {
 }
 
 function verOportunidadLog(id) {
-  // Navegar a modificar y abrir la oportunidad
-  const modBtn = document.querySelector('[data-page=modificar]');
-  if (modBtn) navigate(modBtn);
-  setTimeout(() => editFromTabla(id), 300);
+  openEditModal(id);
 }
 
 // ══════════════════════════════════════════════
