@@ -172,9 +172,9 @@
             <div class="section-block">
               <div class="section-title">Datos Comerciales</div>
               <div class="three-col" style="margin-bottom:18px">
-                <div class="form-group"><label>TCV</label><input type="number" id="n_tcv" placeholder="0" min="0" oninput="calcFX('n')"/></div>
+                <div class="form-group"><label>TCV</label><input type="text" inputmode="decimal" id="n_tcv" placeholder="Ej: 1.500.000 o 1500000" oninput="calcFX('n')"/></div>
                 <div class="form-group"><label>Currency</label><select id="n_currency" onchange="fetchFX('n')"><option value="">— Seleccionar —</option><option>ARS</option><option>CLP</option><option>EUR</option><option>USD</option></select></div>
-                <div class="form-group"><label>% PM</label><input type="number" id="n_pm" placeholder="0" min="0" max="100" step="0.1"/></div>
+                <div class="form-group"><label>% PM</label><input type="text" inputmode="decimal" id="n_pm" placeholder="Ej: 15,5 o 15.5"/></div>
               </div>
               <div class="two-col-form" style="margin-bottom:18px">
                 <div class="form-group">
@@ -184,7 +184,7 @@
                 </div>
                 <div class="form-group"><label>Tipo de Cambio</label><input type="number" id="n_tipoCambio" placeholder="—" step="0.0001" oninput="calcFX('n')" readonly style="color:var(--text-muted)"/></div>
               </div>
-              <div class="form-group" style="max-width:200px"><label>% Probabilidad</label><input type="number" id="n_probabilidad" placeholder="0" min="0" max="100" step="1"/></div>
+              <div class="form-group" style="max-width:200px"><label>% Probabilidad</label><input type="text" inputmode="decimal" id="n_probabilidad" placeholder="Ej: 75 o 75,5"/></div>
             </div>
             <div style="display:flex;gap:12px;justify-content:flex-end">
               <button type="button" class="btn btn-ghost" onclick="resetNueva()">Limpiar</button>
@@ -481,9 +481,9 @@
         <div class="section-block">
           <div class="section-title">Datos Comerciales</div>
           <div class="three-col" style="margin-bottom:18px">
-            <div class="form-group"><label>TCV</label><input type="number" id="e_tcv" placeholder="0" min="0" oninput="calcFX('e')"/></div>
+            <div class="form-group"><label>TCV</label><input type="text" inputmode="decimal" id="e_tcv" placeholder="Ej: 1.500.000 o 1500000" oninput="calcFX('e')"/></div>
             <div class="form-group"><label>Currency</label><select id="e_currency" onchange="fetchFX('e')"><option value="">— Seleccionar —</option><option>ARS</option><option>CLP</option><option>EUR</option><option>USD</option></select></div>
-            <div class="form-group"><label>% PM</label><input type="number" id="e_pm" placeholder="0" min="0" max="100" step="0.1"/></div>
+            <div class="form-group"><label>% PM</label><input type="text" inputmode="decimal" id="e_pm" placeholder="Ej: 15,5 o 15.5"/></div>
           </div>
           <div class="two-col-form" style="margin-bottom:18px">
             <div class="form-group">
@@ -493,7 +493,7 @@
             </div>
             <div class="form-group"><label>Tipo de Cambio</label><input type="number" id="e_tipoCambio" placeholder="—" step="0.0001" oninput="calcFX('e')" readonly style="color:var(--text-muted)"/></div>
           </div>
-          <div class="form-group" style="max-width:200px"><label>% Probabilidad</label><input type="number" id="e_probabilidad" placeholder="0" min="0" max="100" step="1"/></div>
+          <div class="form-group" style="max-width:200px"><label>% Probabilidad</label><input type="text" inputmode="decimal" id="e_probabilidad" placeholder="Ej: 75 o 75,5"/></div>
         </div>
         <div style="display:flex;gap:12px;justify-content:space-between;flex-wrap:wrap;padding-top:8px">
           <button type="button" class="btn btn-danger" id="e_btnDelete" onclick="handleDelete()" style="display:none">🗑 Eliminar</button>

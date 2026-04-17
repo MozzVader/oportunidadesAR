@@ -354,6 +354,46 @@ const _fxRates = {};
 const _fxCache = {};       // Cache por moneda: { ARS: { rate, ts }, USD: { rate, ts } }
 const _FX_CACHE_TTL = 30 * 60 * 1000; // 30 minutos
 
+// Obtiene tipo de cambio (reutilizable, sin depender del DOM)
+async function getFXRate(currency) {
+  if (!currency || currency === 'EUR') return 1;
+  const cached = _fxCache[currency];
+  if (cached && (Date.now() - cached.ts < _FX_CACHE_TTL)) return cached.rate;
+  try {
+    const res  = await fetch(`https://api.exchangerate-api.com/v4/latest/${currency}`);
+    const data = await res.json();
+    const rate = data.rates['EUR'];
+    _fxCache[currency] = { rate, ts: Date.now() };
+    return rate;
+  } catch(e) {
+    console.warn(`Error obteniendo FX para ${currency}:`, e);
+    return null;
+  }
+}
+
+// Parsea un número en formato argentino (1.234.567,89) o estándar (1234567.89)
+function parseLocalizedNumber(val) {
+  if (val === undefined || val === null || val === '') return NaN;
+  const s = String(val).trim();
+  // Si ya es un número válido, devolverlo directamente
+  if (!isNaN(Number(s)) && s.indexOf('.') <= 1) return Number(s);
+  // Detectar formato argentino: tiene última coma seguida de exactamente 2 dígitos (posible decimal)
+  // Ej: "1.234.567,89" → "1234567.89"
+  const lastComma = s.lastIndexOf(',');
+  const lastDot = s.lastIndexOf('.');
+  // Si la coma está después del último punto: formato argentino (puntos=miles, coma=decimal)
+  if (lastComma > lastDot) {
+    const cleaned = s.replace(/\./g, '').replace(',', '.');
+    return Number(cleaned);
+  }
+  // Si solo tiene comas sin puntos: "1234,56" → "1234.56"
+  if (lastComma >= 0 && lastDot < 0) {
+    return Number(s.replace(',', '.'));
+  }
+  // Formato estándar o ya sin separadores
+  return Number(s.replace(/,/g, ''));
+}
+
 async function fetchFX(prefix) {
   const currency = document.getElementById(`${prefix}_currency`).value;
   if (!currency || currency === 'EUR') {
@@ -364,7 +404,7 @@ async function fetchFX(prefix) {
     return;
   }
 
-  // Verificar cache por moneda
+  // Verificar cache por moneda (usar getFXRate para reutilizar)
   const cached = _fxCache[currency];
   if (cached && (Date.now() - cached.ts < _FX_CACHE_TTL)) {
     _fxRates[prefix] = cached.rate;
@@ -380,24 +420,24 @@ async function fetchFX(prefix) {
   document.getElementById(`${prefix}_tcvEurValue`).textContent = 'Obteniendo tipo de cambio...';
   document.getElementById(`${prefix}_fxBadge`).style.display = 'none';
   try {
-    const res  = await fetch(`https://api.exchangerate-api.com/v4/latest/${currency}`);
-    const data = await res.json();
-    const rate = data.rates['EUR'];
-    _fxRates[prefix] = rate;
-    // Guardar en cache por moneda
-    _fxCache[currency] = { rate, ts: Date.now() };
-    document.getElementById(`${prefix}_tipoCambio`).value = rate.toFixed(6);
-    const badge = document.getElementById(`${prefix}_fxBadge`);
-    badge.style.display = 'inline-flex';
-    badge.textContent = `1 ${currency} = ${rate.toFixed(4)} EUR`;
-    calcFX(prefix);
+    const rate = await getFXRate(currency);
+    if (rate) {
+      _fxRates[prefix] = rate;
+      document.getElementById(`${prefix}_tipoCambio`).value = rate.toFixed(6);
+      const badge = document.getElementById(`${prefix}_fxBadge`);
+      badge.style.display = 'inline-flex';
+      badge.textContent = `1 ${currency} = ${rate.toFixed(4)} EUR`;
+      calcFX(prefix);
+    } else {
+      document.getElementById(`${prefix}_tcvEurValue`).textContent = 'Error al obtener tipo de cambio';
+    }
   } catch(e) {
     document.getElementById(`${prefix}_tcvEurValue`).textContent = 'Error al obtener tipo de cambio';
   }
 }
 
 function calcFX(prefix) {
-  const tcv      = parseFloat(document.getElementById(`${prefix}_tcv`).value) || 0;
+  const tcv      = parseLocalizedNumber(document.getElementById(`${prefix}_tcv`).value) || 0;
   const fx       = parseFloat(document.getElementById(`${prefix}_tipoCambio`).value) || _fxRates[prefix];
   const currency = document.getElementById(`${prefix}_currency`).value;
   const display  = document.getElementById(`${prefix}_tcvEurValue`);
@@ -432,12 +472,12 @@ async function handleNueva(e) {
       fechaInicio:  document.getElementById('n_fechaInicio').value,
       fechaEntrega: document.getElementById('n_fechaEntrega').value,
       notas:        document.getElementById('n_notas').value,
-      tcv:          document.getElementById('n_tcv').value || '0',
+      tcv:          parseLocalizedNumber(document.getElementById('n_tcv').value) || 0,
       currency:     document.getElementById('n_currency').value,
       tcvEur:       document.getElementById('n_tcvEur').value || '0',
       tipoCambio:   document.getElementById('n_tipoCambio').value || '',
-      probabilidad: document.getElementById('n_probabilidad').value || '',
-      pm:           document.getElementById('n_pm').value || ''
+      probabilidad: parseLocalizedNumber(document.getElementById('n_probabilidad').value) || 0,
+      pm:           parseLocalizedNumber(document.getElementById('n_pm').value) || 0
     });
     CRM.logEvento('creacion', 'Creó la oportunidad', id, '', document.getElementById('n_nombre').value);
     TOAST.success('Oportunidad guardada exitosamente.');
@@ -549,12 +589,12 @@ async function handleUpdate(e) {
       fechaInicio:  document.getElementById('e_fechaInicio').value,
       fechaEntrega: document.getElementById('e_fechaEntrega').value,
       notas:        document.getElementById('e_notas').value,
-      tcv:          document.getElementById('e_tcv').value || '0',
+      tcv:          parseLocalizedNumber(document.getElementById('e_tcv').value) || 0,
       currency:     document.getElementById('e_currency').value,
       tcvEur:       document.getElementById('e_tcvEur').value || '0',
       tipoCambio:   document.getElementById('e_tipoCambio').value || '',
-      probabilidad: document.getElementById('e_probabilidad').value || '',
-      pm:           document.getElementById('e_pm').value || ''
+      probabilidad: parseLocalizedNumber(document.getElementById('e_probabilidad').value) || 0,
+      pm:           parseLocalizedNumber(document.getElementById('e_pm').value) || 0
     });
 
     // Log del evento
@@ -1324,6 +1364,28 @@ async function executeImport() {
       errors.push(`Fila ${i + 2}: estado "${data.estado}" no válido`);
       updateImportProgress(i + 1, total);
       continue;
+    }
+
+    // Parsear campos numéricos con soporte de formato argentino
+    const tcvVal = parseLocalizedNumber(data.tcv);
+    if (!isNaN(tcvVal)) data.tcv = tcvVal;
+    else data.tcv = 0;
+
+    const probVal = parseLocalizedNumber(data.probabilidad);
+    if (!isNaN(probVal)) data.probabilidad = probVal;
+    else data.probabilidad = 0;
+
+    const pmVal = parseLocalizedNumber(data.pm);
+    if (!isNaN(pmVal)) data.pm = pmVal;
+    else data.pm = 0;
+
+    // Calcular TCV EUR si no viene en el Excel pero hay TCV y currency
+    if ((!data.tcvEur || parseFloat(data.tcvEur) === 0) && data.tcv > 0 && data.currency) {
+      const rate = await getFXRate(data.currency);
+      if (rate) {
+        data.tcvEur = parseFloat((data.tcv * rate).toFixed(2));
+        data.tipoCambio = parseFloat(rate.toFixed(6));
+      }
     }
 
     try {
