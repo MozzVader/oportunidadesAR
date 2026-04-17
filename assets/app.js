@@ -241,7 +241,7 @@ const TOAST = (() => {
 const PAGE_TITLES = {
   home: 'Inicio', nueva: 'Nueva Oportunidad', modificar: 'Modificar Oportunidad',
   mis: 'Mis Oportunidades', todas: 'Ver Todas', kanban: 'Kanban',
-  estadisticas: 'Estadísticas', perfil: 'Mi Perfil', log: 'Log de Eventos', usuarios: 'Administración'
+  calendario: 'Calendario', estadisticas: 'Estadísticas', perfil: 'Mi Perfil', log: 'Log de Eventos', usuarios: 'Administración'
 };
 
 function navigate(btn) {
@@ -259,6 +259,7 @@ function onPageEnter(page) {
   else if (page === 'mis')          initMis();
   else if (page === 'todas')        initTabla();
   else if (page === 'kanban')       initKanban();
+  else if (page === 'calendario')   initCalendario();
   else if (page === 'estadisticas') renderStats();
   else if (page === 'modificar')    initModSearch();
   else if (page === 'perfil')       renderPerfil();
@@ -744,6 +745,127 @@ function closeVerModal(event) {
 async function downloadExcelAction() {
   const rows = await CRM.getData();
   CRM.downloadExcel(rows);
+}
+
+// ══════════════════════════════════════════════
+// CALENDARIO
+// ══════════════════════════════════════════════
+let _calYear, _calMonth, _calRows = [];
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DIAS_SEMANA = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+
+async function initCalendario() {
+  document.getElementById('calLoading').style.display = 'flex';
+  document.getElementById('calContent').style.display = 'none';
+  _calRows = await CRM.getData();
+  document.getElementById('calLoading').style.display = 'none';
+  document.getElementById('calContent').style.display = 'block';
+  if (_calYear === undefined) {
+    const now = new Date();
+    _calYear = now.getFullYear();
+    _calMonth = now.getMonth();
+  }
+  renderCalendario();
+}
+
+function calNavMonth(delta) {
+  _calMonth += delta;
+  if (_calMonth > 11) { _calMonth = 0; _calYear++; }
+  if (_calMonth < 0)  { _calMonth = 11; _calYear--; }
+  renderCalendario();
+}
+
+function calGoToday() {
+  const now = new Date();
+  _calYear = now.getFullYear();
+  _calMonth = now.getMonth();
+  renderCalendario();
+}
+
+function renderCalendario() {
+  document.getElementById('calMonthLabel').textContent = `${MESES[_calMonth]} ${_calYear}`;
+
+  const grid = document.getElementById('calGrid');
+  const firstDay = new Date(_calYear, _calMonth, 1);
+  const lastDay  = new Date(_calYear, _calMonth + 1, 0);
+  const startDow = (firstDay.getDay() + 6) % 7; // Mon=0
+  const daysInMonth = lastDay.getDate();
+
+  // Build events map: key = "YYYY-MM-DD", value = [{row, type}]
+  const events = {};
+  _calRows.forEach(r => {
+    if (r.fechaEntrega) {
+      const d = toInputDate(r.fechaEntrega);
+      if (d) {
+        const key = d.substring(0, 10);
+        if (!events[key]) events[key] = [];
+        events[key].push({ row: r, type: 'entrega' });
+      }
+    }
+    if (r.fechaInicio && r.fechaEntrega) {
+      const d = toInputDate(r.fechaInicio);
+      if (d) {
+        const key = d.substring(0, 10);
+        if (!events[key]) events[key] = [];
+        events[key].push({ row: r, type: 'inicio' });
+      }
+    }
+  });
+
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
+  // Previous month trailing days
+  const prevLast = new Date(_calYear, _calMonth, 0).getDate();
+  let html = '<div class="cal-grid-header">' + DIAS_SEMANA.map(d => `<div class="cal-dow">${d}</div>`).join('') + '</div>';
+  html += '<div class="cal-grid-body">';
+
+  // Previous month padding
+  for (let i = startDow - 1; i >= 0; i--) {
+    html += `<div class="cal-day cal-day-other">${prevLast - i}</div>`;
+  }
+
+  // Current month days
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${_calYear}-${String(_calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = dateStr === todayStr;
+    const dayEvents = events[dateStr] || [];
+
+    html += `<div class="cal-day${isToday ? ' cal-day-today' : ''}">`;
+    html += `<div class="cal-day-num">${d}</div>`;
+
+    if (dayEvents.length > 0) {
+      html += '<div class="cal-events">';
+      dayEvents.slice(0, 3).forEach(ev => {
+        const color = CRM.ESTADO_COLORS[ev.row.estado] || 'var(--text-muted)';
+        if (ev.type === 'entrega') {
+          html += `<div class="cal-event cal-event-entrega" style="border-left-color:${color}" onclick="verOportunidad('${ev.row.id}')" title="${ev.row.nombre || ''} — ${ev.row.cliente || ''}">
+            <span class="cal-event-dot" style="background:${color}"></span>
+            <span class="cal-event-text">${ev.row.nombre || '—'}</span>
+          </div>`;
+        } else {
+          html += `<div class="cal-event cal-event-inicio" onclick="verOportunidad('${ev.row.id}')" title="Inicio: ${ev.row.nombre || ''}">
+            <span class="cal-event-text">${ev.row.nombre || '—'}</span>
+          </div>`;
+        }
+      });
+      if (dayEvents.length > 3) {
+        html += `<div class="cal-event-more">+${dayEvents.length - 3} más</div>`;
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+
+  // Next month padding
+  const totalCells = startDow + daysInMonth;
+  const remaining = (7 - (totalCells % 7)) % 7;
+  for (let i = 1; i <= remaining; i++) {
+    html += `<div class="cal-day cal-day-other">${i}</div>`;
+  }
+
+  html += '</div>';
+  grid.innerHTML = html;
 }
 
 // ══════════════════════════════════════════════

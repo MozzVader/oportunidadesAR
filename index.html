@@ -63,6 +63,10 @@
         <span class="nav-label">Kanban</span>
       </button>
       <div class="nav-section-title">Análisis</div>
+      <button class="nav-item" data-page="calendario" data-tooltip="Calendario" onclick="navigate(this)">
+        <svg fill="none" viewBox="0 0 18 18" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="14" height="13" rx="2"/><path d="M2 7h14M6 1v4M12 1v4" stroke-linecap="round"/></svg>
+        <span class="nav-label">Calendario</span>
+      </button>
       <button class="nav-item" data-page="estadisticas" data-tooltip="Estadísticas" onclick="navigate(this)">
         <svg fill="none" viewBox="0 0 18 18" stroke="currentColor" stroke-width="1.8"><path d="M2 16V10M6 16V6M10 16V8M14 16V2" stroke-linecap="round"/></svg>
         <span class="nav-label">Estadísticas</span>
@@ -354,6 +358,30 @@
         </div>
         <div id="kanbanLoading" class="loading"><div class="spinner"></div> Cargando tablero...</div>
         <div id="kanbanBoard" class="kanban-board" style="display:none"></div>
+      </div>
+
+      <!-- ══ CALENDARIO ══ -->
+      <div class="page-section" id="page-calendario">
+        <div class="calendario-header">
+          <div>
+            <h1>Calendario</h1>
+            <p class="subtitle">Fechas de entrega y seguimiento de oportunidades.</p>
+          </div>
+          <div class="calendario-nav">
+            <button class="btn btn-ghost" id="calPrev" onclick="calNavMonth(-1)">&#8592;</button>
+            <span id="calMonthLabel" style="font-weight:700;font-size:15px;min-width:180px;text-align:center"></span>
+            <button class="btn btn-ghost" id="calNext" onclick="calNavMonth(1)">&#8594;</button>
+            <button class="btn btn-ghost" onclick="calGoToday()">Hoy</button>
+          </div>
+        </div>
+        <div id="calLoading" class="loading"><div class="spinner"></div> Cargando...</div>
+        <div id="calContent" style="display:none">
+          <div class="cal-legend">
+            <div class="cal-legend-item"><span class="cal-legend-dot cal-legend-dot-entrega"></span> Fecha de Entrega</div>
+            <div class="cal-legend-item"><span class="cal-legend-dot cal-legend-dot-inicio"></span> Fecha de Inicio</div>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+        </div>
       </div>
 
       <!-- ══ ESTADÍSTICAS ══ -->
