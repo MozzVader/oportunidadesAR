@@ -246,22 +246,25 @@
     // Si ya hay sesión activa, redirigir al index
     if (AUTH.getSession()) window.location.href = 'index.html';
 
-    // Restaurar modo oscuro si el usuario lo tenia seteado
+    // Restaurar tema (claro u oscuro) según la última preferencia del usuario
     (function() {
-      // theme.js usa sessionStorage + usuario, pero aca no hay sesión.
-      // Buscamos cualquier clave de tema guardada y la copiamos a 'default'
-      // para que theme.js no la sobreescriba en DOMContentLoaded
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('presales_ar_theme_')) {
-          const theme = localStorage.getItem(key);
-          localStorage.setItem('presales_ar_theme_default', theme);
-          // Aplicar inmediatamente a html y body para evitar flash de fondo claro
-          if (theme === 'dark') {
-            document.documentElement.classList.add('dark-mode');
-            document.body.classList.add('dark-mode');
-          }
-          break;
+      var latestTheme = null;
+      for (var i = 0; i < localStorage.length; i++) {
+        var key = localStorage.key(i);
+        if (key && key.startsWith('presales_ar_theme_') && key !== 'presales_ar_theme_default') {
+          // Clave específica de usuario = preferencia más reciente de la sesión
+          latestTheme = localStorage.getItem(key);
+        }
+      }
+      // Si no hay clave de usuario, usar la clave default
+      if (!latestTheme) {
+        latestTheme = localStorage.getItem('presales_ar_theme_default');
+      }
+      if (latestTheme) {
+        localStorage.setItem('presales_ar_theme_default', latestTheme);
+        if (latestTheme === 'dark') {
+          document.documentElement.classList.add('dark-mode');
+          document.body.classList.add('dark-mode');
         }
       }
     })();
