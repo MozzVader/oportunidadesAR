@@ -1233,7 +1233,7 @@ async function initKanban() {
 
   const session = AUTH.getSession();
   const raw = await CRM.getData();
-  _kanbanRows = session.perfil === 'admin' ? raw : raw.filter(r => r.responsable === session.nombre);
+  _kanbanRows = raw; // Todos los roles ven todas las cards
 
   // Populate responsables filter (admin only)
   const selR = document.getElementById('k_responsable');
@@ -1366,6 +1366,10 @@ async function handleKanbanDrop(id, newEstado) {
 
   // Check edit permissions
   const session = AUTH.getSession();
+  if (session.perfil === 'solo lectura') {
+    TOAST.error('No tenés permisos para mover oportunidades.');
+    return;
+  }
   if (session.perfil !== 'admin' && r.responsable !== session.nombre) {
     TOAST.error('No tenés permisos para mover esta oportunidad.');
     return;
@@ -1380,7 +1384,7 @@ async function handleKanbanDrop(id, newEstado) {
     TOAST.success(`"${r.nombre}" → ${newEstado}`);
     // Refresh data in background
     const fresh = await CRM.getData();
-    _kanbanRows = session.perfil === 'admin' ? fresh : fresh.filter(x => x.responsable === session.nombre);
+    _kanbanRows = fresh; // Todos los roles ven todas las cards
     renderKanban();
   } catch(err) {
     // Rollback on error
