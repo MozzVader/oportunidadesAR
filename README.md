@@ -9,14 +9,19 @@
 
 ## Características
 
-- **Dashboard interactivo** con KPIs, funnel de pipeline y gráficos de distribución
+- **Dashboard interactivo** con KPIs, pipeline por estado y gráficos de distribución
 - **Gestión de oportunidades** con campos completos (cliente, industria, práctica, TCV, probabilidad, PM)
+- **Edición inline** — editar oportunidades desde un modal sin abandonar la pantalla actual
 - **Tablero Kanban** con drag & drop para mover oportunidades entre estados
+- **Vista Calendario** — calendario mensual con fechas de entrega e inicio por oportunidad
+- **Log de Eventos** — registro de actividad (creación, edición, cambio de estado, eliminación)
+- **Estadísticas avanzadas** — gráficos por estado, origen, responsable, práctica e industria
 - **Roles y permisos** granulares (admin, usuario, solo lectura)
 - **Carga masiva** desde Excel (importar oportunidades por lotes)
 - **Exportación a Excel** de las oportunidades filtradas
 - **Modo claro/oscuro** con persistencia por usuario
 - **Diseño glassmorphism** responsive
+- **Notificaciones toast** — feedback visual en tiempo real sobre acciones
 - **Offline-first** con persistencia de Firestore
 - **Tiempo real** — cambios se sincronizan automáticamente entre pestañas
 
@@ -39,7 +44,9 @@
 |---|:---:|:---:|:---:|
 | Ver todas las oportunidades | ✅ | ✅ | ✅ |
 | Ver Kanban (todas las cards) | ✅ | ✅ | ✅ |
+| Ver Calendario | ✅ | ✅ | ✅ |
 | Ver Estadísticas | ✅ | ✅ | ✅ |
+| Ver Log de Eventos | ✅ | ✅ | ✅ |
 | Crear oportunidad | ✅ | ✅ | ❌ |
 | Editar oportunidad propia | ✅ | ✅ | ❌ |
 | Editar oportunidad ajena | ✅ | ❌ | ❌ |
