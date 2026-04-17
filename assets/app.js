@@ -521,14 +521,16 @@ function backToModSearch() {
   _fxRates['e'] = null;
 }
 
-  // Capturar estado viejo antes de actualizar
-  const opp = _tablaRows.find(r => r.id === id) || _modRows.find(r => r.id === id) || {};
-  const oldEstado = opp.estado || '';
-  const newEstado = document.getElementById('e_estado').value;
 async function handleUpdate(e) {
   e.preventDefault();
   const id  = document.getElementById('e_id').value;
   const btn = document.getElementById('e_submitBtn');
+
+  // Capturar estado viejo antes de actualizar
+  const opp = _modRows.find(r => r.id === id) || (_tablaRows.length ? _tablaRows.find(r => r.id === id) : {}) || {};
+  const oldEstado = opp.estado || '';
+  const newEstado = document.getElementById('e_estado').value;
+
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner-inline"></span>Guardando...';
   try {
