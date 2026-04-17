@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>PRESALES AR</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-  <link href="assets/style.css?v=7" rel="stylesheet"/>
+  <link href="assets/style.css?v=8" rel="stylesheet"/>
   <!-- External Libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
@@ -174,17 +174,17 @@
               <div class="three-col" style="margin-bottom:18px">
                 <div class="form-group"><label>TCV</label><input type="text" inputmode="decimal" id="n_tcv" placeholder="Ej: 1.500.000 o 1500000" oninput="calcFX('n')"/></div>
                 <div class="form-group"><label>Currency</label><select id="n_currency" onchange="fetchFX('n')"><option value="">— Seleccionar —</option><option>ARS</option><option>CLP</option><option>EUR</option><option>USD</option></select></div>
-                <div class="form-group"><label>% PM</label><input type="text" inputmode="decimal" id="n_pm" placeholder="Ej: 15,5 o 15.5"/></div>
+                <div class="form-group"><label>% PM</label><div class="input-suffix"><input type="text" inputmode="decimal" id="n_pm" placeholder="Ej: 15,5"/><span class="input-suffix-text">%</span></div></div>
               </div>
               <div class="two-col-form" style="margin-bottom:18px">
                 <div class="form-group">
                   <label>TCV EUR <span id="n_fxBadge" class="fx-badge" style="display:none"></span></label>
-                  <div class="tcv-eur-display"><span id="n_tcvEurValue" class="fx-loading">Seleccioná moneda y TCV</span></div>
+                  <div class="fx-display"><span id="n_tcvEurValue" class="fx-loading">Seleccioná moneda y TCV</span></div>
                   <input type="hidden" id="n_tcvEur"/>
                 </div>
-                <div class="form-group"><label>Tipo de Cambio</label><input type="number" id="n_tipoCambio" placeholder="—" step="0.0001" oninput="calcFX('n')" readonly style="color:var(--text-muted)"/></div>
+                <div class="form-group"><label>Tipo de Cambio</label><input type="number" id="n_tipoCambio" placeholder="—" step="0.0001" oninput="calcFX('n')" readonly class="input-readonly"/></div>
               </div>
-              <div class="form-group" style="max-width:200px"><label>% Probabilidad</label><input type="text" inputmode="decimal" id="n_probabilidad" placeholder="Ej: 75 o 75,5"/></div>
+              <div class="form-group" style="max-width:200px"><label>% Probabilidad</label><div class="input-suffix"><input type="text" inputmode="decimal" id="n_probabilidad" placeholder="Ej: 75,5"/><span class="input-suffix-text">%</span></div></div>
             </div>
             <div style="display:flex;gap:12px;justify-content:flex-end">
               <button type="button" class="btn btn-ghost" onclick="resetNueva()">Limpiar</button>
@@ -483,17 +483,17 @@
           <div class="three-col" style="margin-bottom:18px">
             <div class="form-group"><label>TCV</label><input type="text" inputmode="decimal" id="e_tcv" placeholder="Ej: 1.500.000 o 1500000" oninput="calcFX('e')"/></div>
             <div class="form-group"><label>Currency</label><select id="e_currency" onchange="fetchFX('e')"><option value="">— Seleccionar —</option><option>ARS</option><option>CLP</option><option>EUR</option><option>USD</option></select></div>
-            <div class="form-group"><label>% PM</label><input type="text" inputmode="decimal" id="e_pm" placeholder="Ej: 15,5 o 15.5"/></div>
+            <div class="form-group"><label>% PM</label><div class="input-suffix"><input type="text" inputmode="decimal" id="e_pm" placeholder="Ej: 15,5"/><span class="input-suffix-text">%</span></div></div>
           </div>
           <div class="two-col-form" style="margin-bottom:18px">
             <div class="form-group">
               <label>TCV EUR <span id="e_fxBadge" class="fx-badge" style="display:none"></span></label>
-              <div class="tcv-eur-display"><span id="e_tcvEurValue" class="fx-loading">—</span></div>
+              <div class="fx-display"><span id="e_tcvEurValue" class="fx-loading">—</span></div>
               <input type="hidden" id="e_tcvEur"/>
             </div>
-            <div class="form-group"><label>Tipo de Cambio</label><input type="number" id="e_tipoCambio" placeholder="—" step="0.0001" oninput="calcFX('e')" readonly style="color:var(--text-muted)"/></div>
+            <div class="form-group"><label>Tipo de Cambio</label><input type="number" id="e_tipoCambio" placeholder="—" step="0.0001" oninput="calcFX('e')" readonly class="input-readonly"/></div>
           </div>
-          <div class="form-group" style="max-width:200px"><label>% Probabilidad</label><input type="text" inputmode="decimal" id="e_probabilidad" placeholder="Ej: 75 o 75,5"/></div>
+          <div class="form-group" style="max-width:200px"><label>% Probabilidad</label><div class="input-suffix"><input type="text" inputmode="decimal" id="e_probabilidad" placeholder="Ej: 75,5"/><span class="input-suffix-text">%</span></div></div>
         </div>
         <div style="display:flex;gap:12px;justify-content:space-between;flex-wrap:wrap;padding-top:8px">
           <button type="button" class="btn btn-danger" id="e_btnDelete" onclick="handleDelete()" style="display:none">🗑 Eliminar</button>

@@ -372,9 +372,12 @@ async function getFXRate(currency) {
 }
 
 // Parsea un número en formato argentino (1.234.567,89) o estándar (1234567.89)
+// Soporta símbolo % al final (se ignora)
 function parseLocalizedNumber(val) {
   if (val === undefined || val === null || val === '') return NaN;
-  const s = String(val).trim();
+  let s = String(val).trim();
+  // Quitar símbolo % si el usuario lo escribió
+  if (s.endsWith('%')) s = s.slice(0, -1).trim();
   // Si ya es un número válido, devolverlo directamente
   if (!isNaN(Number(s)) && s.indexOf('.') <= 1) return Number(s);
   // Detectar formato argentino: tiene última coma seguida de exactamente 2 dígitos (posible decimal)
@@ -416,8 +419,11 @@ async function fetchFX(prefix) {
     return;
   }
 
-  document.getElementById(`${prefix}_tcvEurValue`).className = 'fx-loading';
-  document.getElementById(`${prefix}_tcvEurValue`).textContent = 'Obteniendo tipo de cambio...';
+  const eurDisplay = document.getElementById(`${prefix}_tcvEurValue`);
+  const eurContainer = eurDisplay ? eurDisplay.parentElement : null;
+  eurDisplay.className = 'fx-loading';
+  eurDisplay.textContent = 'Obteniendo tipo de cambio...';
+  if (eurContainer) eurContainer.style.borderColor = 'var(--border)';
   document.getElementById(`${prefix}_fxBadge`).style.display = 'none';
   try {
     const rate = await getFXRate(currency);
@@ -429,10 +435,10 @@ async function fetchFX(prefix) {
       badge.textContent = `1 ${currency} = ${rate.toFixed(4)} EUR`;
       calcFX(prefix);
     } else {
-      document.getElementById(`${prefix}_tcvEurValue`).textContent = 'Error al obtener tipo de cambio';
+      eurDisplay.textContent = 'Error al obtener tipo de cambio';
     }
   } catch(e) {
-    document.getElementById(`${prefix}_tcvEurValue`).textContent = 'Error al obtener tipo de cambio';
+    eurDisplay.textContent = 'Error al obtener tipo de cambio';
   }
 }
 
@@ -441,14 +447,16 @@ function calcFX(prefix) {
   const fx       = parseFloat(document.getElementById(`${prefix}_tipoCambio`).value) || _fxRates[prefix];
   const currency = document.getElementById(`${prefix}_currency`).value;
   const display  = document.getElementById(`${prefix}_tcvEurValue`);
-  if (!currency) { display.className = 'fx-loading'; display.textContent = 'Seleccioná moneda y TCV'; document.getElementById(`${prefix}_tcvEur`).value = ''; return; }
-  if (!fx)       { display.className = 'fx-loading'; display.textContent = 'Obteniendo tipo de cambio...'; return; }
-  if (!tcv)      { display.className = 'fx-loading'; display.textContent = 'Ingresá el TCV'; document.getElementById(`${prefix}_tcvEur`).value = ''; return; }
+  const eurContainer = display ? display.parentElement : null;
+  if (!currency) { display.className = 'fx-loading'; display.textContent = 'Seleccioná moneda y TCV'; if (eurContainer) eurContainer.style.borderColor = 'var(--border)'; document.getElementById(`${prefix}_tcvEur`).value = ''; return; }
+  if (!fx)       { display.className = 'fx-loading'; display.textContent = 'Obteniendo tipo de cambio...'; if (eurContainer) eurContainer.style.borderColor = 'var(--border)'; return; }
+  if (!tcv)      { display.className = 'fx-loading'; display.textContent = 'Ingresá el TCV'; if (eurContainer) eurContainer.style.borderColor = 'var(--border)'; document.getElementById(`${prefix}_tcvEur`).value = ''; return; }
   const eur = tcv * fx;
   display.className = '';
   display.style.color = 'var(--text)';
   display.textContent = '€ ' + eur.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   document.getElementById(`${prefix}_tcvEur`).value = eur.toFixed(2);
+  if (eurContainer) eurContainer.style.borderColor = 'var(--accent)';
 }
 
 // ══════════════════════════════════════════════

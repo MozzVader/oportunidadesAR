@@ -361,14 +361,54 @@ body.dark-mode .kanban-card { background:#1e1c24;border-color:#2a2832; }
 .skeleton-card-half { height:180px; }
 .skeleton-rect { height:16px;margin-bottom:10px; }
 .skeleton-result { height:60px;border-radius:var(--radius);margin-bottom:8px; }
-.tcv-eur-display {
-  display:flex;align-items:center;
-  background:var(--glass-bg);
-  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
-  border:1px solid var(--glass-border);
-  border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;font-weight:600;color:var(--text);min-height:42px;
+/* Input suffix (e.g., % for percentage fields) */
+.input-suffix {
+  position: relative;
+  display: flex;
+  align-items: center;
 }
-body.dark-mode .tcv-eur-display { background:rgba(30,30,28,0.6); }
+.input-suffix input {
+  padding-right: 36px !important;
+  width: 100%;
+}
+.input-suffix-text {
+  position: absolute;
+  right: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* FX Display — aligned with regular inputs */
+.fx-display {
+  display:flex;align-items:center;
+  background:var(--bg);
+  border:1.5px solid var(--border);
+  border-radius:var(--radius-sm);
+  padding:10px 14px;
+  font-size:13px;font-weight:600;color:var(--text);
+  min-height:42px;
+  width:100%;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+body.dark-mode .fx-display {
+  background:rgba(30, 30, 28, 0.7);
+  border-color:rgba(255,255,255,0.1);
+  color:#f0f0f0;
+}
+
+/* Read-only input styling */
+.input-readonly {
+  color:var(--text-muted) !important;
+  cursor:default;
+}
+.input-readonly:focus {
+  border-color:var(--border) !important;
+  box-shadow:none !important;
+}
+
 .fx-badge { display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent);border-radius:var(--radius-sm);padding:3px 8px;margin-left:8px; }
 .fx-loading { color:var(--text-muted);font-weight:500;font-size:12px; }
 .filters { display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px; }
